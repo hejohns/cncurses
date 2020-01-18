@@ -20,7 +20,13 @@ int main(int argc, char** argv){
     clear();
     //end{initialization}
     //begin{body]
-    buffer.push("010");
+    buffer.push("020,050,050");
+    buffer.push("001");
+    buffer.push("011,%s,Hello");
+    buffer.push("019,101,100");
+    buffer.push("011,%s,cruel");
+    buffer.push("019,102,100");
+    buffer.push("011,%s,world");
     buffer.repaint();
     refresh();
     getch();

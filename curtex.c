@@ -103,6 +103,11 @@ void screen_buffer_repaint(){
         case 0:
             break;
         case 1:
+            // getxy
+            // args: none
+            {
+                getyx(stdscr, Y, X);
+            }
             break;
         case 2:
             break;
@@ -120,14 +125,76 @@ void screen_buffer_repaint(){
             break;
         case 9:
             break;
-        case 10:
-            mvprintw(ROWS_/2, COLS_/2, "%d-%d", ROWS_, COLS_);
+        case 10:;
+            // mv
+            // args: y,x
+            {
+            char* preserve = strdup(buffer.queue[i]);
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            int y = opcode(token);
+            token = strtok(NULL, ",");
+            int x = opcode(token);
+            mvprintw(y, x, "");
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 11:
+            // printw single
+            // args: fmt,str
+            {
+            //strtok destroys original. Must preserve copy.
+            char* preserve = strdup(buffer.queue[i]);
+            //first token is opcode- throw away
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            char* str = strdup(token);
+            printw(fmt, str);
+            //restore copy
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 12:
+            // printw double
+            // args: fmt,str,str
+            {
+            //strtok destroys original. Must preserve copy.
+            char* preserve = strdup(buffer.queue[i]);
+            //first token is opcode- throw away
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            char* str1 = strdup(token);
+            token = strtok(NULL, ",");
+            char* str2 = strdup(token);
+            printw(fmt, str1, str2);
+            //restore copy
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 13:
+            // printw triple
+            // args: fmt,str,str,str
+            {
+            //strtok destroys original. Must preserve copy.
+            char* preserve = strdup(buffer.queue[i]);
+            //first token is opcode- throw away
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            char* str1 = strdup(token);
+            token = strtok(NULL, ",");
+            char* str2 = strdup(token);
+            token = strtok(NULL, ",");
+            char* str3 = strdup(token);
+            printw(fmt, str1, str2, str3);
+            //restore copy
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 14:
             break;
@@ -140,14 +207,95 @@ void screen_buffer_repaint(){
         case 18:
             break;
         case 19:
+            // mv relative. 100 100=no change
+            // args: dy,dx
+            {
+            char* preserve = strdup(buffer.queue[i]);
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            int dy = opcode(token)-100;
+            token = strtok(NULL, ",");
+            int dx = opcode(token)-100;
+            mvprintw(Y+dy, X+dx, "");
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
-        case 20:
+        case 20:;
+            // mv
+            // args: percenty,percentx
+            {
+            char* preserve = strdup(buffer.queue[i]);
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            float y = opcode(token)/100.0;
+            token = strtok(NULL, ",");
+            float x = opcode(token)/100.0;
+            mvprintw((int)ROWS_*y, (int)COLS_*x, "");
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
-        case 21:
+        case 21:;
+            // mvprintw single
+            // args: percenty,percentx,fmt,str
+            {
+            //strtok destroys original. Must preserve copy.
+            char* preserve = strdup(buffer.queue[i]);
+            //first token is opcode- throw away
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            float y = opcode(token)/100.0;
+            token = strtok(NULL, ",");
+            float x = opcode(token)/100.0;
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            char* str = strdup(token);
+            mvprintw((int)ROWS_*y, (int)COLS_*x, fmt, str);
+            //restore copy
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
-        case 22:
+        case 22:;
+            // mvprintw double
+            // args: percenty,percentx,fmt,str,str
+            {
+            char* preserve = strdup(buffer.queue[i]);
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            float y = opcode(token)/100.0;
+            token = strtok(NULL, ",");
+            float x = opcode(token)/100.0;
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            char* str1 = strdup(token);
+            token = strtok(NULL, ",");
+            char* str2 = strdup(token);
+            mvprintw((int)ROWS_*y, (int)COLS_*x, fmt, str1, str2);
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
-        case 23:
+        case 23:;
+            // mvprintw triple 
+            // args: percenty,percentx,fmt,str,str,str
+            {
+            char* preserve = strdup(buffer.queue[i]);
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            float y = opcode(token)/100.0;
+            token = strtok(NULL, ",");
+            float x = opcode(token)/100.0;
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            char* str1 = strdup(token);
+            token = strtok(NULL, ",");
+            char* str2 = strdup(token);
+            token = strtok(NULL, ",");
+            char* str3 = strdup(token);
+            mvprintw((int)ROWS_*y, (int)COLS_*x, fmt, str1, str2, str3);
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 24:
             break;
@@ -302,6 +450,9 @@ void screen_buffer_repaint(){
         case 99:
             break;
         case 100:
+            break;
+        default:
+            crash("opcode invalid", EXIT_FAILURE);
             break;
         }
     }

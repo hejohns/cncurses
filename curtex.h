@@ -15,6 +15,7 @@
 /* extern screen_buffer buffer */
 sigset_t sigwinch_mask;
 int ROWS_, COLS_;
+int X, Y;
 
 /* REQUIRES: valid buffer
  * MODIFIES: empties buffer
