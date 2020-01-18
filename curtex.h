@@ -12,7 +12,7 @@
 #define BUFFER_COLS_MAX 80
 
 //globals
-/* screen_buffer buffer */
+/* extern screen_buffer buffer */
 sigset_t sigwinch_mask;
 int ROWS_, COLS_;
 
@@ -89,6 +89,16 @@ void screen_buffer_clear();
  */
 void screen_buffer_erase(size_t index);
 
+
+/* REQUIRES: none
+ * MODIFIES: none
+ * EFFECTS: repaints terminal as stored in global buffer.
+ *
+ * NOTES: no
+ */
+void screen_buffer_repaint();
+
+
 // declare and initialize screen buffer
 typedef struct{
     //public
@@ -98,9 +108,11 @@ typedef struct{
     char* (*at)(size_t);
     void (*clear)();
     void (*erase)(size_t);
+    void (*repaint)();
     //private
     char queue[BUFFER_ROWS_MAX][BUFFER_COLS_MAX];
     size_t rows;
 } screen_buffer;
+extern screen_buffer buffer;
 
 #endif /* CURTEX_H */

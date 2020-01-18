@@ -7,6 +7,8 @@
 #include "misc.h"
 #include "curtex.h"
 
+screen_buffer buffer;
+
 int main(int argc, char** argv){
     //begin{initialization}}
     sigwinch_initialize();
@@ -18,7 +20,8 @@ int main(int argc, char** argv){
     clear();
     //end{initialization}
     //begin{body]
-    mvprintw(ROWS_/2, (COLS_-6)/2, "%d-%d", ROWS_, COLS_);
+    buffer.push("010");
+    buffer.repaint();
     refresh();
     getch();
     while(true){}
