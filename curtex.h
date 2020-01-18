@@ -13,9 +13,9 @@ sigset_t sigwinch_mask;
 int ROWS_, COLS_;
 
 
-/* REQUIRES: yes
- * MODIFIES: yes
- * EFFECTS: yes
+/* REQUIRES: valid buffer
+ * MODIFIES: empties buffer
+ * EFFECTS: paints screen from buffer
  *
  * NOTES: Repaints screen if SIGWINCH interrupt received.
  */
@@ -29,25 +29,26 @@ void sigwinch_handler();
  */
 void sigwinch_initialize();
 
-/* REQUIRES: none
+/* REQUIRES: valid command
  * MODIFIES: none
- * EFFECTS: none
+ * EFFECTS: pushes command into buffer queue
  *
- * NOTES:
+ * NOTES: command format- 999,...
+ * first three digits are command code, followed by comma seperated args
  */
 void screen_buffer_push(char* command);
 
-/* REQUIRES: none
- * MODIFIES: none
- * EFFECTS: none
+/* REQUIRES: dest pointer
+ * MODIFIES: overwrites dest with first line of buffer
+ * EFFECTS: pops front off queue and returns
  *
- * NOTES:
+ * NOTES: not intended to be used directly
  */
-void screen_buffer_pop(char* command);
+char* screen_buffer_pop(char* dest);
 
 /* REQUIRES: none
  * MODIFIES: none
- * EFFECTS: none
+ * EFFECTS: returns size of buffer. size--
  *
  * NOTES:
  */
@@ -55,11 +56,11 @@ size_t screen_buffer_size();
 
 /* REQUIRES: none
  * MODIFIES: none
- * EFFECTS: none
+ * EFFECTS: returns front of queue
  *
  * NOTES:
  */
-char* screen_buffer_peek();
+char* screen_buffer_peek(char* dest);
 
 /* REQUIRES: none
  * MODIFIES: none
@@ -69,9 +70,9 @@ char* screen_buffer_peek();
  */
 void screen_buffer_clear();
 
-/* REQUIRES: none
+/* REQUIRES: valid index
  * MODIFIES: none
- * EFFECTS: none
+ * EFFECTS: size--
  *
  * NOTES:
  */
@@ -80,9 +81,9 @@ void screen_buffer_erase(size_t index);
 typedef struct{
     //public
     void (*push)(char*);
-    void (*pop)(char*);
+    char* (*pop)(char*);
     size_t (*size)();
-    char* (*peek)();
+    char* (*peek)(char*);
     void (*clear)();
     void (*erase)(size_t);
     //private
