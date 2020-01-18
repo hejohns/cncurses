@@ -8,18 +8,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BUFFER_ROWS_MAX 80
+#define BUFFER_COLS_MAX 80
+
 //globals
+/* screen_buffer buffer */
 sigset_t sigwinch_mask;
 int ROWS_, COLS_;
-
 
 /* REQUIRES: valid buffer
  * MODIFIES: empties buffer
  * EFFECTS: paints screen from buffer
  *
  * NOTES: Repaints screen if SIGWINCH interrupt received.
+ * Modifies global buffer, but does not take args since struct sigaction expects void (*func)(void)
  */
 void sigwinch_handler();
+
 
 /* REQUIRES: none
  * MODIFIES: none
@@ -28,6 +33,7 @@ void sigwinch_handler();
  * NOTES: Run at beginning of main.
  */
 void sigwinch_initialize();
+
 
 /* REQUIRES: valid command
  * MODIFIES: none
@@ -38,37 +44,42 @@ void sigwinch_initialize();
  */
 void screen_buffer_push(char* command);
 
-/* REQUIRES: dest pointer
+
+/* REQUIRES: dest pointer. buffer.size()>0
  * MODIFIES: overwrites dest with first line of buffer
- * EFFECTS: pops front off queue and returns
+ * EFFECTS: pops front off queue and returns. rows shifted down 1; 
  *
  * NOTES: not intended to be used directly
  */
 char* screen_buffer_pop(char* dest);
 
+
 /* REQUIRES: none
  * MODIFIES: none
- * EFFECTS: returns size of buffer. size--
+ * EFFECTS: returns size of buffer.
  *
  * NOTES:
  */
 size_t screen_buffer_size();
 
-/* REQUIRES: none
- * MODIFIES: none
- * EFFECTS: returns front of queue
- *
- * NOTES:
- */
-char* screen_buffer_peek(char* dest);
 
 /* REQUIRES: none
  * MODIFIES: none
- * EFFECTS: none
+ * EFFECTS: returns pointer to row index
  *
  * NOTES:
  */
+char* screen_buffer_at(size_t index);
+
+
+/* REQUIRES: none
+ * MODIFIES: none
+ * EFFECTS: sets rows=0. Does not overwrite existing values in queue
+ *
+ * NOTES: a "quick format"
+ */
 void screen_buffer_clear();
+
 
 /* REQUIRES: valid index
  * MODIFIES: none
@@ -78,26 +89,18 @@ void screen_buffer_clear();
  */
 void screen_buffer_erase(size_t index);
 
+// declare and initialize screen buffer
 typedef struct{
     //public
     void (*push)(char*);
     char* (*pop)(char*);
     size_t (*size)();
-    char* (*peek)(char*);
+    char* (*at)(size_t);
     void (*clear)();
     void (*erase)(size_t);
     //private
-    char queue[80][80];
+    char queue[BUFFER_ROWS_MAX][BUFFER_COLS_MAX];
     size_t rows;
 } screen_buffer;
 
-screen_buffer buffer={
-    .push=&screen_buffer_push,
-    .pop=&screen_buffer_pop,
-    .size=&screen_buffer_size,
-    .peek=&screen_buffer_peek,
-    .clear=&screen_buffer_clear,
-    .erase=&screen_buffer_erase,
-    .rows=(size_t)0
-};
 #endif /* CURTEX_H */
