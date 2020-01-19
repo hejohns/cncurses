@@ -33,7 +33,13 @@ int main(int argc, char** argv){
     cprintw_1(%s,world);
     buffer.repaint();
     refresh();
-    getch();
+    echo();
+    char buf1[10];
+    char buf2[20] = "021,050,050,%s,";
+    getstr(buf1);
+    (buffer.clear)();
+    strcat(buf2, buf1);
+    buffer.push(buf2);
     while(true){}
     //end{body}}
     //begin{termination}

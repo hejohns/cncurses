@@ -1,3 +1,4 @@
+#include "macros.h"
 #include <string.h>
 #include "curtex.h"
 #include "misc.h"
@@ -21,7 +22,7 @@ void sigwinch_initialize(){
 	.sa_flags = 0
     };
     if(sigaction(SIGWINCH, &sigwinch_action, NULL)){
-	crash("Failed to set SIGWINCH handler", EXIT_FAILURE);
+	panic("Failed to set SIGWINCH handler", EXIT_FAILURE);
     }
 }
 
@@ -40,10 +41,10 @@ void sigwinch_handler(){
 
 void screen_buffer_push(char* command){
     if(buffer.size() >= BUFFER_ROWS_MAX){
-        crash("buffer is full", EXIT_FAILURE);
+        panic("buffer is full", EXIT_FAILURE);
     }
     if(strlen(command) >= BUFFER_COLS_MAX){
-        crash("command too long", EXIT_FAILURE);
+        panic("command too long", EXIT_FAILURE);
     }
     strcpy(buffer.queue[buffer.size()], command);
     buffer.rows++;
@@ -51,7 +52,7 @@ void screen_buffer_push(char* command){
 
 char* screen_buffer_pop(char* dest){
     if(buffer.size()==0){
-        crash("buffer is empty; nothing to pop", EXIT_FAILURE);
+        panic("buffer is empty; nothing to pop", EXIT_FAILURE);
     }
     dest=strcpy(dest, buffer.queue[0]);
     for(size_t i=1; i<buffer.size(); i++){
@@ -67,7 +68,7 @@ size_t screen_buffer_size(){
 
 char* screen_buffer_at(size_t index){
     if(index >= buffer.size()){
-        crash("index out of range", EXIT_FAILURE);
+        panic("index out of range", EXIT_FAILURE);
     }
     return buffer.queue[index];
 }
@@ -78,7 +79,7 @@ void screen_buffer_clear(){
 
 void screen_buffer_erase(size_t index){
     if(index >= buffer.size()){
-        crash("index out of range", EXIT_FAILURE);
+        panic("index out of range", EXIT_FAILURE);
     }
     for(size_t i=index+1; i<buffer.size(); i++){
         strcpy(buffer.queue[i-1], buffer.queue[i]);
@@ -95,7 +96,7 @@ void screen_buffer_repaint(){
         return;
     }
     if(buffer.size()>=BUFFER_ROWS_MAX){
-        crash("buffer corrupted", EXIT_FAILURE);
+        panic("buffer corrupted", EXIT_FAILURE);
     }
     for(size_t i=0; i<buffer.size(); i++){
         int cfunc = opcode(buffer.queue[i]);
@@ -452,7 +453,7 @@ void screen_buffer_repaint(){
         case 100:
             break;
         default:
-            crash("opcode invalid", EXIT_FAILURE);
+            panic("opcode invalid", EXIT_FAILURE);
             break;
         }
     }
