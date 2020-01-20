@@ -1,5 +1,6 @@
 #include "macros.h"
 #include <string.h>
+#include <stdarg.h>
 #include "curtex.h"
 #include "misc.h"
 
@@ -91,6 +92,74 @@ int opcode(char* row){
     return 100*(row[0]-48)+10*(row[1]-48)+1*(row[2]-48);
 }
 
+void cgetyx(){
+    buffer.push("001");
+}
+
+void cmove(int y, int x){
+    if(y <= 0 || y > ROWS_){
+        panic("y out of bounds", EXIT_FAILURE);
+    }
+    if(x <= 0 || x > COLS_){
+        panic("x out of bounds", EXIT_FAILURE);
+    }
+    char str1[BUFFER_COLS_MAX] = "010,";
+    char str2[BUFFER_COLS_MAX];
+    str2 = itoa(y, str2, 10);
+    str1 = strcat(str1, str2);
+    str1 = strcat(str1, ",");
+    str2 = itoa(x, str2, 10);
+    str1 = strcat(str1, str2);
+    buffer.push(str1);
+}
+
+void cprintw(const char* fmt, ...){
+    int numArgs = 0;
+    for(i=0; i<strlen(fmt); i++){
+        if(fmt[0] == '%'){
+            numArgs++;
+        }
+    }
+    if(numArgs > 3){
+        panic("cprintw can take maximum 3 strings", EXIT_FAILURE);
+    }
+    char str1[BUFFER_COLS_MAX];
+    char str2[BUFFER_COLS_MAX];
+    str2 = itoa(10+numArgs, str2, 10);
+    str1 = strcat(str1, str2);
+    str1 = strcat(str1, ",");
+    str1 = strcat(str1, fmt);
+    str1 = strcat(str1, ",");
+    va_list args;
+    va_start(args, fmt);
+    for(int i=0; i<strlen(fmt); i++){
+        if(fmt[i] == '%'){
+            switch(fmt[i+1]){
+                case 's':
+                    char str3[BUFFER_COLS_MAX] = strcopy(str1);
+                    str3 = strcat(str3, va_arg(args, char*));
+                    buffer.push(str3);
+                    break;
+                case 'd':
+                    char str3[BUFFER_COLS_MAX] = strcopy(str1);
+                    char str4[BUFFER_COLS_MAX];
+                    str4 = itoa(va_arg(args, int), str4, 10);
+                    str3 = strcat(str3, str4);
+                    buffer.push(str3);
+                    break;
+                case 'f':
+                    char str3[BUFFER_COLS_MAX] = strcopy(str1);
+                    break;
+                default:
+                    panic("Can only take %s, %d, %f", EXIT_FAILURE);
+                    break;
+            }
+            i++;
+        }
+    }
+    va_end(args);
+}
+
 void screen_buffer_repaint(){
     if(buffer.size()==0){
         return;
@@ -136,12 +205,12 @@ void screen_buffer_repaint(){
             int y = opcode(token);
             token = strtok(NULL, ",");
             int x = opcode(token);
-            mvprintw(y, x, "");
+            move(y, x);
             strcpy(buffer.queue[i], preserve);
             }
             break;
         case 11:
-            // printw single
+            // printw single string
             // args: fmt,str
             {
             //strtok destroys original. Must preserve copy.
@@ -158,7 +227,7 @@ void screen_buffer_repaint(){
             }
             break;
         case 12:
-            // printw double
+            // printw double string
             // args: fmt,str,str
             {
             //strtok destroys original. Must preserve copy.
@@ -177,7 +246,7 @@ void screen_buffer_repaint(){
             }
             break;
         case 13:
-            // printw triple
+            // printw triple string
             // args: fmt,str,str,str
             {
             //strtok destroys original. Must preserve copy.
@@ -197,9 +266,39 @@ void screen_buffer_repaint(){
             strcpy(buffer.queue[i], preserve);
             }
             break;
-        case 14:
+        case 14:;
+            // printw single decimal
+            // args: fmt,dec
+            {
+            //strtok destroys original. Must preserve copy.
+            char* preserve = strdup(buffer.queue[i]);
+            //first token is opcode- throw away
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            int dec = atoi(token);
+            printw(fmt, str);
+            //restore copy
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 15:
+            // printw double decimal
+            // args: fmt,dec
+            {
+            //strtok destroys original. Must preserve copy.
+            char* preserve = strdup(buffer.queue[i]);
+            //first token is opcode- throw away
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            char* fmt = strdup(token);
+            token = strtok(NULL, ",");
+            int dec = atoi(token);
+            printw(fmt, str);
+            //restore copy
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 16:
             break;
@@ -236,7 +335,7 @@ void screen_buffer_repaint(){
             }
             break;
         case 21:;
-            // mvprintw single
+            // mvprintw single string
             // args: percenty,percentx,fmt,str
             {
             //strtok destroys original. Must preserve copy.
@@ -257,7 +356,7 @@ void screen_buffer_repaint(){
             }
             break;
         case 22:;
-            // mvprintw double
+            // mvprintw double string
             // args: percenty,percentx,fmt,str,str
             {
             char* preserve = strdup(buffer.queue[i]);
@@ -277,7 +376,7 @@ void screen_buffer_repaint(){
             }
             break;
         case 23:;
-            // mvprintw triple 
+            // mvprintw triple string
             // args: percenty,percentx,fmt,str,str,str
             {
             char* preserve = strdup(buffer.queue[i]);
@@ -310,9 +409,33 @@ void screen_buffer_repaint(){
             break;
         case 29:
             break;
-        case 30:
+        case 30:;
+            // vline
+            // args: ch, n
+            {
+            char* preserve = strdup(buffer.queue[i]);
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            char ch = token[0];
+            token = strtok(NULL, ",");
+            int n = opcode(token);
+            vline(ch, n);
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 31:
+            // hline
+            // args: ch, n
+            {
+            char* preserve = strdup(buffer.queue[i]);
+            char* token = strtok(buffer.queue[i], ",");
+            token = strtok(NULL, ",");
+            char ch = token[0];
+            token = strtok(NULL, ",");
+            int n = opcode(token);
+            hline(ch, n);
+            strcpy(buffer.queue[i], preserve);
+            }
             break;
         case 32:
             break;

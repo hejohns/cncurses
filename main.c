@@ -1,10 +1,13 @@
 //main.c
 #include "macros.h"
-#include <curses.h>
-#include <signal.h>
-#include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include <curses.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "misc.h"
 #include "curtex.h"
 
@@ -12,11 +15,34 @@ screen_buffer buffer;
 
 int main(int argc, char** argv){
     //begin{initialization}}
+    pid_t forkreturn1 = fork();
+    pid_t forkreturn2;
+    if(forkreturn1 < 0){
+        panic("fork1 failed", EXIT_FAILURE);
+    }
+    else if(forkreturn1 == 0){
+        return 0;
+    }
+    else{
+        forkreturn2 = fork();
+        if(forkreturn2 < 0){
+            panic("fork2 failed", EXIT_FAILURE);
+        }
+        else if(forkreturn2 == 0){
+            return 0;
+        }
+        else{
+            goto parent;
+        }
+    }
+parent:
+    waitpid(forkreturn1, NULL, WNOHANG);
+    waitpid(forkreturn2, NULL, WNOHANG);
     sigwinch_initialize();
     initscr();
     START_COLOR();
-    INIT_PAIR(1, COLOR_GREEN, COLOR_BLACK);
-    ATTRON(COLOR_PAIR(1));
+    cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
+    cattron(COLOR_PAIR(1));
     getmaxyx(stdscr, ROWS_, COLS_);
     cbreak();
     keypad(stdscr, TRUE);
@@ -24,6 +50,12 @@ int main(int argc, char** argv){
     clear();
     //end{initialization}
     //begin{body]
+    move(30, 30);
+    refresh();
+    vline('|', 20);
+    refresh();
+    getch();
+    while(true){}
     cmove_p(050,050);
     cgetyx();
     cprintw_1(%s,hello);
@@ -43,7 +75,7 @@ int main(int argc, char** argv){
     while(true){}
     //end{body}}
     //begin{termination}
-    ATTROFF(COLOR_PAIR(1));
+    catroff(COLOR_PAIR(1));
     endwin();
     return EXIT_SUCCESS;
     //end{termination}
