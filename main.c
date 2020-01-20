@@ -61,7 +61,7 @@ parent:
     cmove_r(2, 0);
     cprintw("%s", "world");
     cmove_r(3, 0);
-    cprintw("%d- %d", 10, 20);
+    cprintw("%d-%d,", 10, 20);
     cprintw("%f-%f", .100, .200);
     buffer.repaint();
     refresh();

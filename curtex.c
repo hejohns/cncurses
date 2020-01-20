@@ -109,7 +109,7 @@ void cmove(int y, int x){
         panic("x out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "002,%d,%d", y, x);
+    sprintf(str1, "002^%d^%d", y, x);
     buffer.push(str1);
 }
 
@@ -121,7 +121,7 @@ void cmove_r(int dy, int dx){
         panic("dx out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "003,%d,%d", dy, dx);
+    sprintf(str1, "003^%d^%d", dy, dx);
     buffer.push(str1);
 }
 
@@ -133,7 +133,7 @@ void cmove_p(double py, double px){
         panic("dx out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "004,%f,%f", py, px);
+    sprintf(str1, "004^%f^%f", py, px);
     buffer.push(str1);
 }
 
@@ -154,15 +154,15 @@ void cprintw(const char* fmt, ...){
         if(fmt[i] == '%'){
             switch(fmt[i+1]){
                 case 's':;
-                    sprintf(str1, "011,%s", va_arg(args, char*));
+                    sprintf(str1, "011^%s", va_arg(args, char*));
                     buffer.push(str1);
                     break;
                 case 'd':;
-                    sprintf(str1, "012,%d", va_arg(args, int));
+                    sprintf(str1, "012^%d", va_arg(args, int));
                     buffer.push(str1);
                     break;
                 case 'f':;
-                    sprintf(str1, "013,%f", va_arg(args, double));
+                    sprintf(str1, "013^%f", va_arg(args, double));
                     buffer.push(str1);
                     break;
                 default:
@@ -185,13 +185,13 @@ void cprintw(const char* fmt, ...){
 
 void cvline(char ch, int n){
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "021,%c,%d", ch, n);
+    sprintf(str1, "021^%c^%d", ch, n);
     buffer.push(str1);
 }
 
 void chline(char ch, int n){
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "022,%c,%d", ch, n);
+    sprintf(str1, "022^%c^%d", ch, n);
     buffer.push(str1);
 }
 
@@ -219,10 +219,10 @@ void screen_buffer_repaint(){
             // args: y,x
             {
             char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             int y = atoi(token);
-            token = strtok(NULL, ",");
+            token = strtok(NULL, "^");
             int x = atoi(token);
             move(y, x);
             strcpy(buffer.queue[i], preserve);
@@ -233,10 +233,10 @@ void screen_buffer_repaint(){
             // args: dy,dx
             {
             char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             int dy = atoi(token);
-            token = strtok(NULL, ",");
+            token = strtok(NULL, "^");
             int dx = atoi(token);
             move(Y+dy, X+dx);
             strcpy(buffer.queue[i], preserve);
@@ -247,10 +247,10 @@ void screen_buffer_repaint(){
             // args: percenty,percentx
             {
             char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             double py = atof(token);
-            token = strtok(NULL, ",");
+            token = strtok(NULL, "^");
             double px = atof(token);
             move((int)ROWS_*py, (int)COLS_*px);
             strcpy(buffer.queue[i], preserve);
@@ -275,8 +275,8 @@ void screen_buffer_repaint(){
             //strtok destroys original. Must preserve copy.
             char* preserve = strdup(buffer.queue[i]);
             //first token is opcode- throw away
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             char* str = strdup(token);
             printw("%s", str);
             //restore copy
@@ -290,8 +290,8 @@ void screen_buffer_repaint(){
             //strtok destroys original. Must preserve copy.
             char* preserve = strdup(buffer.queue[i]);
             //first token is opcode- throw away
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             int dec = atoi(token);
             printw("%d", dec);
             //restore copy
@@ -305,8 +305,8 @@ void screen_buffer_repaint(){
             //strtok destroys original. Must preserve copy.
             char* preserve = strdup(buffer.queue[i]);
             //first token is opcode- throw away
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             double flt = atof(token);
             printw("%f", flt);
             //restore copy
@@ -332,10 +332,10 @@ void screen_buffer_repaint(){
             // args: ch, n
             {
             char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             char ch = token[0];
-            token = strtok(NULL, ",");
+            token = strtok(NULL, "^");
             int n = atoi(token);
             vline(ch, n);
             strcpy(buffer.queue[i], preserve);
@@ -346,10 +346,10 @@ void screen_buffer_repaint(){
             // args: ch, n
             {
             char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], ",");
-            token = strtok(NULL, ",");
+            char* token = strtok(buffer.queue[i], "^");
+            token = strtok(NULL, "^");
             char ch = token[0];
-            token = strtok(NULL, ",");
+            token = strtok(NULL, "^");
             int n = atoi(token);
             hline(ch, n);
             strcpy(buffer.queue[i], preserve);
