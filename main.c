@@ -40,7 +40,7 @@ parent:
     waitpid(forkreturn2, NULL, WNOHANG);
     sigwinch_initialize();
     initscr();
-    START_COLOR();
+    cstart_color();
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
     cattron(COLOR_PAIR(1));
     getmaxyx(stdscr, ROWS_, COLS_);
@@ -50,32 +50,22 @@ parent:
     clear();
     //end{initialization}
     //begin{body]
-    move(30, 30);
-    refresh();
-    vline('|', 20);
-    refresh();
-    getch();
-    while(true){}
-    cmove_p(050,050);
+    cvline('|', 20);
+    cmove_p(.50,.50);
     cgetyx();
-    cprintw_1(%s,hello);
-    cmove_r(101,100);
-    cprintw_1(%s,cruel);
-    cmove_r(102,100);
-    cprintw_1(%s,world);
+    cprintw("%s", "Hello");
+    cmove_r(1, 0);
+    cprintw("%s", "cruel");
+    cmove_r(2,0);
+    cprintw("%s", "world");
     buffer.repaint();
     refresh();
     echo();
-    char buf1[10];
-    char buf2[20] = "021,050,050,%s,";
-    getstr(buf1);
-    (buffer.clear)();
-    strcat(buf2, buf1);
-    buffer.push(buf2);
+    //(buffer.clear)();
     while(true){}
     //end{body}}
     //begin{termination}
-    catroff(COLOR_PAIR(1));
+    cattroff(COLOR_PAIR(1));
     endwin();
     return EXIT_SUCCESS;
     //end{termination}

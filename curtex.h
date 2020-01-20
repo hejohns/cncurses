@@ -116,4 +116,11 @@ typedef struct{
 } screen_buffer;
 extern screen_buffer buffer;
 
+void cgetyx();
+void cmove(int y, int x);
+void cmove_r(int dy, int dx);
+void cmove_p(double py, double px);
+void cprintw(const char* fmt, ...);
+void cvline(char ch, int n);
+void chline(char ch, int n);
 #endif /* CURTEX_H */

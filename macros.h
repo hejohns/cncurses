@@ -15,7 +15,7 @@
 #define cattron(x) if(has_colors())\
     attron(x)
 
-#define catrroff(x) if(has_colors())\
+#define cattroff(x) if(has_colors())\
     attroff(x)
 
 #endif
