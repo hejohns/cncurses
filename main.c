@@ -12,6 +12,8 @@
 #include "curtex.h"
 
 screen_buffer buffer;
+int ROWS_, COLS_;
+int Y, X;
 
 int main(int argc, char** argv){
     //begin{initialization}}
@@ -56,8 +58,11 @@ parent:
     cprintw("%s", "Hello");
     cmove_r(1, 0);
     cprintw("%s", "cruel");
-    cmove_r(2,0);
+    cmove_r(2, 0);
     cprintw("%s", "world");
+    cmove_r(3, 0);
+    cprintw("%d- %d", 10, 20);
+    cprintw("%f-%f", .100, .200);
     buffer.repaint();
     refresh();
     echo();

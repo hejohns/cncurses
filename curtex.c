@@ -1,9 +1,13 @@
 #include "macros.h"
+#include <curses.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include "curtex.h"
 #include "misc.h"
+
+int ROWS_, COLS_;
+int Y, X;
 
 screen_buffer buffer={
     .push=&screen_buffer_push,
@@ -168,7 +172,9 @@ void cprintw(const char* fmt, ...){
             i++;
         }
         else if(isascii(fmt[i])){
-            cprintw("%s", fmt[i]);
+            str1[0] = fmt[i];
+            str1[1] = '\0';
+            cprintw("%s", str1);
         }
         else{
             panic("Invalid charachter passed to cprintw", EXIT_FAILURE);
