@@ -60,10 +60,10 @@ parent:
     cmove_r(3, 0);
     cprintw("%d-%d,", 10, 20);
     cprintw("%f-%f", .100, .200);
-    crepaint();
+    crefresh();
     refresh();
     echo();
-    cclear();
+    //cclear();
     while(true){}
     //end{body}}
     //begin{termination}

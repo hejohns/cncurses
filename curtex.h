@@ -120,7 +120,7 @@ void cgetyx();
 void cmove(int y, int x);
 void cmove_r(int dy, int dx);
 void cmove_p(double py, double px);
-void crepaint();
+void crefresh();
 void cclear();
 void cprintw(const char* fmt, ...);
 void cvline(char ch, int n);

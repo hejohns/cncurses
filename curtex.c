@@ -143,7 +143,7 @@ void cmove_p(double py, double px){
     buffer.push(str1);
 }
 
-void crepaint(){
+void crefresh(){
     buffer.repaint();
 }
 
