@@ -11,10 +11,6 @@
 #include "misc.h"
 #include "curtex.h"
 
-screen_buffer buffer;
-int ROWS_, COLS_;
-int Y, X;
-
 int main(int argc, char** argv){
     //begin{initialization}}
     pid_t forkreturn1 = fork();
@@ -55,6 +51,7 @@ parent:
     cvline('|', 20);
     cmove_p(.50,.50);
     cgetyx();
+    c000(1);
     cprintw("%s", "Hello");
     cmove_r(1, 0);
     cprintw("%s", "cruel");
@@ -63,10 +60,10 @@ parent:
     cmove_r(3, 0);
     cprintw("%d-%d,", 10, 20);
     cprintw("%f-%f", .100, .200);
-    buffer.repaint();
+    crepaint();
     refresh();
     echo();
-    //(buffer.clear)();
+    cclear();
     while(true){}
     //end{body}}
     //begin{termination}

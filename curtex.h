@@ -8,14 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define BUFFER_ROWS_MAX 80
-#define BUFFER_COLS_MAX 80
 
 //globals
 /* extern screen_buffer buffer */
 sigset_t sigwinch_mask;
-extern int ROWS_, COLS_;
-extern int Y, X;
+int ROWS_, COLS_;
+int Y, X;
 
 /* REQUIRES: valid buffer
  * MODIFIES: empties buffer
@@ -116,10 +114,14 @@ typedef struct{
 } screen_buffer;
 extern screen_buffer buffer;
 
+// ncurses wrapper functions
+void c000(int number);
 void cgetyx();
 void cmove(int y, int x);
 void cmove_r(int dy, int dx);
 void cmove_p(double py, double px);
+void crepaint();
+void cclear();
 void cprintw(const char* fmt, ...);
 void cvline(char ch, int n);
 void chline(char ch, int n);

@@ -1,5 +1,9 @@
 #define str(...) #__VA_ARGS__
 
+#define DELIM "^"
+#define BUFFER_ROWS_MAX 80
+#define BUFFER_COLS_MAX 80
+
 #define panic(mesg, exit_code) fprintf(stderr, "Fatal: "mesg", %s, %d", __FILE__, __LINE__); exit(exit_code)
 
 
