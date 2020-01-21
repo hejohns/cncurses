@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "misc.h"
-#include "curtex.h"
+#include "cncurses.h"
 
 int main(int argc, char** argv){
     //begin{initialization}}
