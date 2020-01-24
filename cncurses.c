@@ -97,12 +97,6 @@ int opcode(char* row){
     return 100*(row[0]-48)+10*(row[1]-48)+1*(row[2]-48);
 }
 
-void c000(int number){
-    for(int i=0; i<number; i++){
-        buffer.push("000");
-    }
-}
-
 void cgetyx(){
     buffer.push("001");
 }
@@ -168,8 +162,23 @@ void cprintw(const char* fmt, ...){
         if(fmt[i] == '%'){
             switch(fmt[i+1]){
                 case 's':;
-                    sprintf(str1, "011"DELIM"%s", va_arg(args, char*));
-                    buffer.push(str1);
+                    char* arg_str = va_arg(args, char*);
+                    char dummy[2] = DELIM;
+                    if(containsDelim(arg_str)){
+                        for(int i=0; i<strlen(arg_str); i++){
+                            if(arg_str[i] == dummy[0]){
+                                buffer.push("000");
+                            }
+                            else{
+                                snprintf(str1, 6, "011"DELIM"%c", arg_str[i]);
+                                buffer.push(str1);
+                            }
+                        }
+                    }
+                    else{
+                        sprintf(str1, "011"DELIM"%s", arg_str); 
+                        buffer.push(str1);
+                    }
                     break;
                 case 'd':;
                     sprintf(str1, "012"DELIM"%d", va_arg(args, int));
@@ -224,7 +233,7 @@ void screen_buffer_repaint(){
             printw(DELIM);
             break;
         case 1:
-            // getxy
+            // getyx
             // args: none
             {
                 getyx(stdscr, Y, X);

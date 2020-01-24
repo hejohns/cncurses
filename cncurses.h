@@ -115,7 +115,6 @@ typedef struct{
 extern screen_buffer buffer;
 
 // ncurses wrapper functions
-void c000(int number);
 void cgetyx();
 void cmove(int y, int x);
 void cmove_r(int dy, int dx);
