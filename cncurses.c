@@ -19,13 +19,13 @@ screen_buffer buffer={
 
 void cinit(int num, ...){
     if(num >= WINDOWS_MAX){
-        panic("Number of windows must be less than WINDOWS MAX.", EXIT_FAILURE);
+        panic("Number of cwindows must be less than WINDOWS MAX.", EXIT_FAILURE);
     }
-    windows[0] = stdscr;
+    cwindows[0] = stdscr;
     va_list args;
     va_start(args, num);
     for(int i=1; i<=num; i++){
-        windows[i] = va_arg(args, WINDOW*);
+        cwindows[i] = va_arg(args, WINDOW*);
     }
     va_end(args);
 }
@@ -44,18 +44,18 @@ void sigwinch_initialize(){
 
 void sigwinch_handler(){
     endwin();
-    for(int i=0; i<WINDOWS_MAX && windows[i]!=NULL; i++){
-        wclear(windows[i]);
-        wrefresh(windows[i]);
-        wmove(windows[i], 0, 0);
+    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+        wclear(cwindows[i]);
+        wrefresh(cwindows[i]);
+        wmove(cwindows[i], 0, 0);
     }
     getmaxyx(stdscr, cROWS, cCOLS);
     resizeterm(cROWS, cCOLS);
     //
     buffer.repaint();
     //
-    for(int i=0; i<WINDOWS_MAX && windows[i]!=NULL; i++){
-        wrefresh(windows[i]);
+    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+        wrefresh(cwindows[i]);
     }
 }
 
@@ -139,10 +139,10 @@ void cwmove_r(int win, int dy, int dx){
     if(win < 0 || win >= WINDOWS_MAX){
         panic("win out of range", EXIT_FAILURE);
     }
-    if(Y + dy < 0 || Y + dy > cROWS){
+    if(Y[win] + dy < 0 || Y[win] + dy > cROWS){
         panic("dy out of bounds", EXIT_FAILURE);
     }
-    if(X + dx < 0 || X + dx > cCOLS){
+    if(X[win] + dx < 0 || X[win] + dx > cCOLS){
         panic("dx out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
@@ -169,7 +169,7 @@ void cwrefresh(int win){
     if(win < 0 || win >= WINDOWS_MAX){
         panic("win out of range", EXIT_FAILURE);
     }
-    wrefresh(windows[win]);
+    wrefresh(cwindows[win]);
     char str1[BUFFER_COLS_MAX];
     snprintf(str1, 6, "005"DELIM"%d", win);
     buffer.push(str1);
@@ -277,7 +277,7 @@ void screen_buffer_repaint(){
                 char* token = strtok(buffer.at(i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
-                getyx(windows[win], Y, X);
+                getyx(cwindows[win], Y[win], X[win]);
                 strcpy(buffer.at(i), preserve);
             }
             break;
@@ -293,7 +293,7 @@ void screen_buffer_repaint(){
             int y = atoi(token);
             token = strtok(NULL, DELIM);
             int x = atoi(token);
-            wmove(windows[win], y, x);
+            wmove(cwindows[win], y, x);
             strcpy(buffer.at(i), preserve);
             }
             break;
@@ -309,7 +309,7 @@ void screen_buffer_repaint(){
             int dy = atoi(token);
             token = strtok(NULL, DELIM);
             int dx = atoi(token);
-            wmove(windows[win], Y+dy, X+dx);
+            wmove(cwindows[win], Y[win]+dy, X[win]+dx);
             strcpy(buffer.at(i), preserve);
             }
             break;
@@ -325,7 +325,7 @@ void screen_buffer_repaint(){
             double py = atof(token);
             token = strtok(NULL, DELIM);
             double px = atof(token);
-            wmove(windows[win], (int)cROWS*py, (int)cCOLS*px);
+            wmove(cwindows[win], (int)cROWS*py, (int)cCOLS*px);
             strcpy(buffer.at(i), preserve);
             }
             break;
@@ -337,7 +337,7 @@ void screen_buffer_repaint(){
             char* token = strtok(buffer.at(i), DELIM);
             token = strtok(NULL, DELIM);
             int win = atoi(token);
-            wrefresh(windows[win]);
+            wrefresh(cwindows[win]);
             strcpy(buffer.at(i), preserve);
             }
             break;
@@ -363,7 +363,7 @@ void screen_buffer_repaint(){
             int win = atoi(token);
             token = strtok(NULL, DELIM);
             char* str = strdup(token);
-            wprintw(windows[win], "%s", str);
+            wprintw(cwindows[win], "%s", str);
             //restore copy
             strcpy(buffer.at(i), preserve);
             }
@@ -380,7 +380,7 @@ void screen_buffer_repaint(){
             int win = atoi(token);
             token = strtok(NULL, DELIM);
             int dec = atoi(token);
-            wprintw(windows[win], "%d", dec);
+            wprintw(cwindows[win], "%d", dec);
             //restore copy
             strcpy(buffer.at(i), preserve);
             }
@@ -397,7 +397,7 @@ void screen_buffer_repaint(){
             int win = atoi(token);
             token = strtok(NULL, DELIM);
             double flt = atof(token);
-            wprintw(windows[win], "%f", flt);
+            wprintw(cwindows[win], "%f", flt);
             //restore copy
             strcpy(buffer.at(i), preserve);
             }
@@ -428,7 +428,7 @@ void screen_buffer_repaint(){
             char ch = token[0];
             token = strtok(NULL, DELIM);
             int n = atoi(token);
-            wvline(windows[win], ch, n);
+            wvline(cwindows[win], ch, n);
             strcpy(buffer.at(i), preserve);
             }
             break;
@@ -444,7 +444,7 @@ void screen_buffer_repaint(){
             char ch = token[0];
             token = strtok(NULL, DELIM);
             int n = atoi(token);
-            whline(windows[win], ch, n);
+            whline(cwindows[win], ch, n);
             strcpy(buffer.at(i), preserve);
             }
             break;

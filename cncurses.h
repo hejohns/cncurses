@@ -12,12 +12,13 @@
 //globals
 sigset_t sigwinch_mask;
 int cROWS, cCOLS;
-int Y, X;
-WINDOW* windows[WINDOWS_MAX] = {NULL};
+int Y[WINDOWS_MAX];
+int X[WINDOWS_MAX];
+WINDOW* cwindows[WINDOWS_MAX] = {NULL};
 
 /* REQUIRES: number of arguments of type WINDOW* < WINDOWS_MAX
  * MODIFIES: none
- * EFFECTS: Assigns WINDOW* to indicies of windows[WINDOWS_MAX]
+ * EFFECTS: Assigns WINDOW* to indicies of cwindows[WINDOWS_MAX]
  */
 void cinit(int num, ...);
 
