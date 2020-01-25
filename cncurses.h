@@ -15,6 +15,13 @@ sigset_t sigwinch_mask;
 int ROWS_, COLS_;
 int Y, X;
 
+/* REQUIRES: number of arguments of type WINDOW* < WINDOWS_MAX
+ * MODIFIES: none
+ * EFFECTS: Assigns WINDOW* to indicies of windows[WINDOWS_MAX]
+ */
+void cinit(int num, ...){
+
+
 /* REQUIRES: valid buffer
  * MODIFIES: empties buffer
  * EFFECTS: paints screen from buffer

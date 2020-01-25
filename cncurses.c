@@ -6,8 +6,7 @@
 #include "cncurses.h"
 #include "misc.h"
 
-int ROWS_, COLS_;
-int Y, X;
+WINDOW* windows[WINDOWS_MAX] = {0};
 
 screen_buffer buffer={
     .push=&screen_buffer_push,
@@ -19,6 +18,18 @@ screen_buffer buffer={
     .repaint=&screen_buffer_repaint,
     .rows=(size_t)0
 };
+
+void cinit(int num, ...){
+    if(num >= WINDOWS_MAX){
+        panic("Number of windows must be less than WINDOWS MAX.", EXIT_FAILURE)
+    }
+    va_list args;
+    va_start(arg, num);
+    for(int i=1; i<=num; i++){
+        windows[i] = va_arg(args, WINDOW*);
+    }
+    va_end(args);
+}
 
 void sigwinch_initialize(){
     sigemptyset(&sigwinch_mask);
