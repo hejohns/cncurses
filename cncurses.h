@@ -10,16 +10,16 @@
 
 
 //globals
-/* extern screen_buffer buffer */
 sigset_t sigwinch_mask;
-int ROWS_, COLS_;
+int cROWS, cCOLS;
 int Y, X;
+WINDOW* windows[WINDOWS_MAX] = {NULL};
 
 /* REQUIRES: number of arguments of type WINDOW* < WINDOWS_MAX
  * MODIFIES: none
  * EFFECTS: Assigns WINDOW* to indicies of windows[WINDOWS_MAX]
  */
-void cinit(int num, ...){
+void cinit(int num, ...);
 
 
 /* REQUIRES: valid buffer
@@ -107,7 +107,7 @@ void screen_buffer_repaint();
 
 // declare and initialize screen buffer
 typedef struct{
-    //public
+    //"public"
     void (*push)(char*);
     char* (*pop)(char*);
     size_t (*size)();
@@ -119,16 +119,18 @@ typedef struct{
     char queue[BUFFER_ROWS_MAX][BUFFER_COLS_MAX];
     size_t rows;
 } screen_buffer;
-extern screen_buffer buffer;
+screen_buffer buffer;
 
+
+void cinit(int num, ...);
 // ncurses wrapper functions
-void cgetyx();
-void cmove(int y, int x);
-void cmove_r(int dy, int dx);
-void cmove_p(double py, double px);
-void crefresh();
-void cclear();
-void cprintw(const char* fmt, ...);
-void cvline(char ch, int n);
-void chline(char ch, int n);
+void cgetyx(int win);
+void cwmove(int win, int y, int x);
+void cwmove_r(int win, int dy, int dx);
+void cwmove_p(int win, double py, double px);
+void cwrefresh(int win);
+void clearBuf();
+void cwprintw(int win, const char* fmt, ...);
+void cwvline(int win, char ch, int n);
+void cwhline(int win, char ch, int n);
 #endif /* CURTEX_H */

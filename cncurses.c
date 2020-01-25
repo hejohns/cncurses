@@ -6,8 +6,6 @@
 #include "cncurses.h"
 #include "misc.h"
 
-WINDOW* windows[WINDOWS_MAX] = {0};
-
 screen_buffer buffer={
     .push=&screen_buffer_push,
     .pop=&screen_buffer_pop,
@@ -21,10 +19,11 @@ screen_buffer buffer={
 
 void cinit(int num, ...){
     if(num >= WINDOWS_MAX){
-        panic("Number of windows must be less than WINDOWS MAX.", EXIT_FAILURE)
+        panic("Number of windows must be less than WINDOWS MAX.", EXIT_FAILURE);
     }
+    windows[0] = stdscr;
     va_list args;
-    va_start(arg, num);
+    va_start(args, num);
     for(int i=1; i<=num; i++){
         windows[i] = va_arg(args, WINDOW*);
     }
@@ -45,15 +44,19 @@ void sigwinch_initialize(){
 
 void sigwinch_handler(){
     endwin();
-    refresh();
-    clear();
-    getmaxyx(stdscr, ROWS_, COLS_);
-    resizeterm(ROWS_, COLS_);
+    for(int i=0; i<WINDOWS_MAX && windows[i]!=NULL; i++){
+        wclear(windows[i]);
+        wrefresh(windows[i]);
+        wmove(windows[i], 0, 0);
+    }
+    getmaxyx(stdscr, cROWS, cCOLS);
+    resizeterm(cROWS, cCOLS);
     //
     buffer.repaint();
     //
-    refresh();
-    getch();
+    for(int i=0; i<WINDOWS_MAX && windows[i]!=NULL; i++){
+        wrefresh(windows[i]);
+    }
 }
 
 void screen_buffer_push(char* command){
@@ -63,7 +66,7 @@ void screen_buffer_push(char* command){
     if(strlen(command) >= BUFFER_COLS_MAX){
         panic("command too long", EXIT_FAILURE);
     }
-    strcpy(buffer.queue[buffer.size()], command);
+    strcpy(buffer.at(buffer.size()), command);
     buffer.rows++;
 }
 
@@ -71,9 +74,9 @@ char* screen_buffer_pop(char* dest){
     if(buffer.size()==0){
         panic("buffer is empty; nothing to pop", EXIT_FAILURE);
     }
-    dest=strcpy(dest, buffer.queue[0]);
+    dest=strcpy(dest, buffer.at(0));
     for(size_t i=1; i<buffer.size(); i++){
-        strcpy(buffer.queue[i-1], buffer.queue[i]);
+        strcpy(buffer.at(i-1), buffer.at(i));
     }
     buffer.rows--;
     return dest;
@@ -84,7 +87,7 @@ size_t screen_buffer_size(){
 }
 
 char* screen_buffer_at(size_t index){
-    if(index >= buffer.size()){
+    if(index >= buffer.size() || index < 0){
         panic("index out of range", EXIT_FAILURE);
     }
     return buffer.queue[index];
@@ -99,7 +102,7 @@ void screen_buffer_erase(size_t index){
         panic("index out of range", EXIT_FAILURE);
     }
     for(size_t i=index+1; i<buffer.size(); i++){
-        strcpy(buffer.queue[i-1], buffer.queue[i]);
+        strcpy(buffer.at(i-1), buffer.at(i));
     }
     buffer.rows--;
 }
@@ -108,35 +111,49 @@ int opcode(char* row){
     return 100*(row[0]-48)+10*(row[1]-48)+1*(row[2]-48);
 }
 
-void cgetyx(){
-    buffer.push("001");
+void cgetyx(int win){
+    if(win < 0 || win >= WINDOWS_MAX){
+        panic("win out of range", EXIT_FAILURE);
+    }
+    char str1[BUFFER_COLS_MAX];
+    snprintf(str1, 6, "001"DELIM"%d", win);
+    buffer.push(str1);
 }
 
-void cmove(int y, int x){
-    if(y < 0 || y > ROWS_){
+void cwmove(int win, int y, int x){
+    if(win < 0 || win >= WINDOWS_MAX){
+        panic("win out of range", EXIT_FAILURE);
+    }
+    if(y < 0 || y > cROWS){
         panic("y out of bounds", EXIT_FAILURE);
     }
-    if(x < 0 || x > COLS_){
+    if(x < 0 || x > cCOLS){
         panic("x out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "002"DELIM"%d"DELIM"%d", y, x);
+    sprintf(str1, "002"DELIM"%d"DELIM"%d"DELIM"%d", win, y, x);
     buffer.push(str1);
 }
 
-void cmove_r(int dy, int dx){
-    if(Y + dy < 0 || Y + dy > ROWS_){
+void cwmove_r(int win, int dy, int dx){
+    if(win < 0 || win >= WINDOWS_MAX){
+        panic("win out of range", EXIT_FAILURE);
+    }
+    if(Y + dy < 0 || Y + dy > cROWS){
         panic("dy out of bounds", EXIT_FAILURE);
     }
-    if(X + dx < 0 || X + dx > COLS_){
+    if(X + dx < 0 || X + dx > cCOLS){
         panic("dx out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "003"DELIM"%d"DELIM"%d", dy, dx);
+    sprintf(str1, "003"DELIM"%d"DELIM"%d"DELIM"%d", win, dy, dx);
     buffer.push(str1);
 }
 
-void cmove_p(double py, double px){
+void cwmove_p(int win, double py, double px){
+    if(win < 0 || win >= WINDOWS_MAX){
+        panic("win out of range", EXIT_FAILURE);
+    }
     if(py < 0 || py > 100){
         panic("dy out of bounds", EXIT_FAILURE);
     }
@@ -144,19 +161,28 @@ void cmove_p(double py, double px){
         panic("dx out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "004"DELIM"%f"DELIM"%f", py, px);
+    sprintf(str1, "004"DELIM"%d"DELIM"%f"DELIM"%f", win, py, px);
     buffer.push(str1);
 }
 
-void crefresh(){
-    buffer.repaint();
+void cwrefresh(int win){
+    if(win < 0 || win >= WINDOWS_MAX){
+        panic("win out of range", EXIT_FAILURE);
+    }
+    wrefresh(windows[win]);
+    char str1[BUFFER_COLS_MAX];
+    snprintf(str1, 6, "005"DELIM"%d", win);
+    buffer.push(str1);
 }
 
-void cclear(){
+void clearBuf(){
     (buffer.clear)();
 }
 
-void cprintw(const char* fmt, ...){
+void cwprintw(int win, const char* fmt, ...){
+    if(win < 0 || win >= WINDOWS_MAX){
+        panic("win out of range", EXIT_FAILURE);
+    }
     int numArgs = 0;
     for(int i=0; i<strlen(fmt); i++){
         if(fmt[0] == '%'){
@@ -181,22 +207,22 @@ void cprintw(const char* fmt, ...){
                                 buffer.push("000");
                             }
                             else{
-                                snprintf(str1, 6, "011"DELIM"%c", arg_str[i]);
+                                snprintf(str1, 8, "011"DELIM"%d"DELIM"%c", win, arg_str[i]);
                                 buffer.push(str1);
                             }
                         }
                     }
                     else{
-                        sprintf(str1, "011"DELIM"%s", arg_str); 
+                        sprintf(str1, "011"DELIM"%d"DELIM"%s", win, arg_str); 
                         buffer.push(str1);
                     }
                     break;
                 case 'd':;
-                    sprintf(str1, "012"DELIM"%d", va_arg(args, int));
+                    sprintf(str1, "012"DELIM"%d"DELIM"%d", win, va_arg(args, int));
                     buffer.push(str1);
                     break;
                 case 'f':;
-                    sprintf(str1, "013"DELIM"%f", va_arg(args, double));
+                    sprintf(str1, "013"DELIM"%d"DELIM"%f", win, va_arg(args, double));
                     buffer.push(str1);
                     break;
                 default:
@@ -208,7 +234,7 @@ void cprintw(const char* fmt, ...){
         else if(isascii(fmt[i])){
             str1[0] = fmt[i];
             str1[1] = '\0';
-            cprintw("%s", str1);
+            cwprintw(win, "%s", str1);
         }
         else{
             panic("Invalid charachter passed to cprintw", EXIT_FAILURE);
@@ -217,15 +243,15 @@ void cprintw(const char* fmt, ...){
     va_end(args);
 }
 
-void cvline(char ch, int n){
+void cwvline(int win, char ch, int n){
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "021"DELIM"%c"DELIM"%d", ch, n);
+    sprintf(str1, "021"DELIM"%d"DELIM"%c"DELIM"%d", win, ch, n);
     buffer.push(str1);
 }
 
-void chline(char ch, int n){
+void cwhline(int win, char ch, int n){
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "022"DELIM"%c"DELIM"%d", ch, n);
+    sprintf(str1, "022"DELIM"%d"DELIM"%c"DELIM"%d", win, ch, n);
     buffer.push(str1);
 }
 
@@ -237,7 +263,7 @@ void screen_buffer_repaint(){
         panic("buffer corrupted", EXIT_FAILURE);
     }
     for(size_t i=0; i<buffer.size(); i++){
-        int cfunc = opcode(buffer.queue[i]);
+        int cfunc = opcode(buffer.at(i));
         switch(cfunc){
         case 0:
             //print delimeter
@@ -245,54 +271,75 @@ void screen_buffer_repaint(){
             break;
         case 1:
             // getyx
-            // args: none
+            // args: WINDOW* 
             {
-                getyx(stdscr, Y, X);
+                char* preserve = strdup(buffer.at(i));
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                getyx(windows[win], Y, X);
+                strcpy(buffer.at(i), preserve);
             }
             break;
         case 2:;
-            // move
-            // args: y,x
+            // wmove
+            // args: win, y,x
             {
-            char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* preserve = strdup(buffer.at(i));
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             int y = atoi(token);
             token = strtok(NULL, DELIM);
             int x = atoi(token);
-            move(y, x);
-            strcpy(buffer.queue[i], preserve);
+            wmove(windows[win], y, x);
+            strcpy(buffer.at(i), preserve);
             }
             break;
         case 3:;
-            // move_r 
-            // args: dy,dx
+            // wmove_r 
+            // args: win, dy,dx
             {
-            char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* preserve = strdup(buffer.at(i));
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             int dy = atoi(token);
             token = strtok(NULL, DELIM);
             int dx = atoi(token);
-            move(Y+dy, X+dx);
-            strcpy(buffer.queue[i], preserve);
+            wmove(windows[win], Y+dy, X+dx);
+            strcpy(buffer.at(i), preserve);
             }
             break;
         case 4:;
-            // move_p
-            // args: percenty,percentx
+            // wmove_p
+            // args: win, percenty,percentx
             {
-            char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* preserve = strdup(buffer.at(i));
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             double py = atof(token);
             token = strtok(NULL, DELIM);
             double px = atof(token);
-            move((int)ROWS_*py, (int)COLS_*px);
-            strcpy(buffer.queue[i], preserve);
+            wmove(windows[win], (int)cROWS*py, (int)cCOLS*px);
+            strcpy(buffer.at(i), preserve);
             }
             break;
-        case 5:
+        case 5:;
+            //wrefresh
+            //args: win
+            {
+            char* preserve = strdup(buffer.at(i));
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
+            wrefresh(windows[win]);
+            strcpy(buffer.at(i), preserve);
+            }
             break;
         case 6:
             break;
@@ -305,48 +352,54 @@ void screen_buffer_repaint(){
         case 10:
             break;
         case 11:;
-            // printw single string
-            // args: str
+            // wprintw single string
+            // args: win, str
             {
             //strtok destroys original. Must preserve copy.
-            char* preserve = strdup(buffer.queue[i]);
+            char* preserve = strdup(buffer.at(i));
             //first token is opcode- throw away
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             char* str = strdup(token);
-            printw("%s", str);
+            wprintw(windows[win], "%s", str);
             //restore copy
-            strcpy(buffer.queue[i], preserve);
+            strcpy(buffer.at(i), preserve);
             }
             break;
         case 12:;
-            // printw single decimal
-            // args: dec
+            // wprintw single decimal
+            // args: win, dec
             {
             //strtok destroys original. Must preserve copy.
-            char* preserve = strdup(buffer.queue[i]);
+            char* preserve = strdup(buffer.at(i));
             //first token is opcode- throw away
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             int dec = atoi(token);
-            printw("%d", dec);
+            wprintw(windows[win], "%d", dec);
             //restore copy
-            strcpy(buffer.queue[i], preserve);
+            strcpy(buffer.at(i), preserve);
             }
             break;
         case 13:;
-            // printw single float
-            // args: flt
+            // wprintw single float
+            // args: win, flt
             {
             //strtok destroys original. Must preserve copy.
-            char* preserve = strdup(buffer.queue[i]);
+            char* preserve = strdup(buffer.at(i));
             //first token is opcode- throw away
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             double flt = atof(token);
-            printw("%f", flt);
+            wprintw(windows[win], "%f", flt);
             //restore copy
-            strcpy(buffer.queue[i], preserve);
+            strcpy(buffer.at(i), preserve);
             }
             break;
         case 14:
@@ -364,31 +417,35 @@ void screen_buffer_repaint(){
         case 20:
             break;
         case 21:;
-            // vline
+            // wvline
             // args: ch, n
             {
-            char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* preserve = strdup(buffer.at(i));
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             char ch = token[0];
             token = strtok(NULL, DELIM);
             int n = atoi(token);
-            vline(ch, n);
-            strcpy(buffer.queue[i], preserve);
+            wvline(windows[win], ch, n);
+            strcpy(buffer.at(i), preserve);
             }
             break;
         case 22:;
-            // hline
+            // whline
             // args: ch, n
             {
-            char* preserve = strdup(buffer.queue[i]);
-            char* token = strtok(buffer.queue[i], DELIM);
+            char* preserve = strdup(buffer.at(i));
+            char* token = strtok(buffer.at(i), DELIM);
+            token = strtok(NULL, DELIM);
+            int win = atoi(token);
             token = strtok(NULL, DELIM);
             char ch = token[0];
             token = strtok(NULL, DELIM);
             int n = atoi(token);
-            hline(ch, n);
-            strcpy(buffer.queue[i], preserve);
+            whline(windows[win], ch, n);
+            strcpy(buffer.at(i), preserve);
             }
             break;
         case 23:

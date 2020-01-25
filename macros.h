@@ -17,10 +17,10 @@
 #define cinit_pair(...) if(has_colors())\
     init_pair(__VA_ARGS__)
 
-#define cattron(x) if(has_colors())\
-    attron(x)
+#define cwattron(x, y) if(has_colors())\
+    wattron(windows[x], y)
 
-#define cattroff(x) if(has_colors())\
-    attroff(x)
+#define cwattroff(x, y) if(has_colors())\
+    wattroff(windows[x], y)
 
 #endif

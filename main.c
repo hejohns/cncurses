@@ -40,18 +40,22 @@ parent:
     initscr();
     cstart_color();
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
-    cattron(COLOR_PAIR(1));
-    getmaxyx(stdscr, ROWS_, COLS_);
+    cinit_pair(2, COLOR_BLUE, COLOR_BLACK);
+    WINDOW* win1 = newwin(10,20, 5, 10);
+    WINDOW* win2 = newwin(10, 20, 5, 30);
+    cinit(2, win1, win2);
+    cwattron(1, COLOR_PAIR(1));
+    cwattron(2, COLOR_PAIR(2));
+    getmaxyx(stdscr, cROWS, cCOLS);
     cbreak();
     keypad(stdscr, TRUE);
     noecho();
     clear();
     refresh();
-    WINDOW* myWin = newwin(20,20, 10, 10);
-    //box(myWin, 0, 0);
-    //wmove(myWin, 1, 1);
-    wprintw(myWin, "Helloooooooo\nWOOOOORRRLF");
-    wrefresh(myWin);
+    cwprintw(1, "%s", "Helloooooooo\n|WOOOOORRRLF");
+    cwrefresh(1);
+    cwprintw(2, "%s", "YELLLLLOOO\n|WOOOOORRRLF");
+    cwrefresh(2);
     //end{initialization}
     //begin{body]
     //cmove(0,0);
@@ -72,7 +76,8 @@ parent:
     while(true){}
     //end{body}}
     //begin{termination}
-    cattroff(COLOR_PAIR(1));
+    cwattroff(1, COLOR_PAIR(1));
+    cwattroff(2, COLOR_PAIR(2));
     endwin();
     return EXIT_SUCCESS;
     //end{termination}
