@@ -4,17 +4,15 @@
 
 #include <curses.h>
 #include <signal.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 
 //globals
-sigset_t sigwinch_mask;
 int cROWS, cCOLS;
 int Y[WINDOWS_MAX];
 int X[WINDOWS_MAX];
 extern WINDOW* cwindows[WINDOWS_MAX];
+extern int cwincolors[WINDOWS_MAX];
+extern bool cwinch;
 
 /* REQUIRES: number of arguments of type WINDOW* < WINDOWS_MAX
  * MODIFIES: none

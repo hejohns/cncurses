@@ -19,6 +19,10 @@ int main(int argc, char** argv){
         panic("fork1 failed", EXIT_FAILURE);
     }
     else if(forkreturn1 == 0){
+        fclose(stdout);
+        fopen("/dev/null", "w");
+        fclose(stderr);
+        fopen("/dev/null", "w");
         execlp("gdb", "gdb", (char*)NULL);
         return 0;
     }
@@ -28,6 +32,10 @@ int main(int argc, char** argv){
             panic("fork2 failed", EXIT_FAILURE);
         }
         else if(forkreturn2 == 0){
+            fclose(stdout);
+            fopen("/dev/null", "w");
+            fclose(stderr);
+            fopen("/dev/null", "w");
             execlp("gdb", "gdb", (char*)NULL);
             return 0;
         }
@@ -40,15 +48,16 @@ parent:
     waitpid(forkreturn2, NULL, WNOHANG);
     sigwinch_initialize();
     initscr();
+    timeout(-1);
     cstart_color();
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
     cinit_pair(2, COLOR_BLUE, COLOR_BLACK);
     WINDOW* win1 = newwin(10,20, 5, 10);
-    //WINDOW* win2 = newwin(10, 20, 5, 30);
-    //cinit(2, win1, win2);
-    cinit(1, win1);
+    WINDOW* win2 = newwin(10, 20, 5, 40);
+    cinit(2, win1, win2);
+    //cinit(1, win1);
     cwattron(1, COLOR_PAIR(1));
-    //cwattron(2, COLOR_PAIR(2));
+    cwattron(2, COLOR_PAIR(2));
     getmaxyx(stdscr, cROWS, cCOLS);
     cbreak();
     keypad(stdscr, TRUE);
@@ -56,7 +65,9 @@ parent:
     clear();
     refresh();
     cwprintw(1, "%s", "Helloooooooo\n|WOOOOORRRLF");
-    //cwprintw(2, "%s", "YELLLLLOOO\n|WOOOOORRRLF");
+    cwprintw(2, "%s", "YELLLLLOOO\n|WOOOOORRRLF");
+    cwinch = true;
+    buffer.repaint();
     //end{initialization}
     //begin{body]
     //cmove(0,0);
@@ -71,13 +82,36 @@ parent:
     //cprintw("%d-%d,", 10, 20);
     //cprintw("%f-%f", .100, .200);
     //crefresh();
-    //echo();
+    echo();
     //cclear();
-    while(true){}
+    int ch;
+    while((ch = getch()) != KEY_RIGHT){
+        switch(ch){
+            case KEY_LEFT:
+                wclear(win1);
+                wprintw(win1, "hi");
+                wrefresh(win1);
+                break;
+            case KEY_UP:
+                cwattroff(1, COLOR_PAIR(1));
+                delwin(win1);
+                win1=newwin(10,20,5,10);
+                cwattron(1, COLOR_PAIR(1));
+                cwinch = true;
+                break;
+            default:
+                refresh();
+                //ungetch(ch);
+                //buffer.repaint();
+                //ch = wgetch(win1);
+                break;
+        }
+        //buffer.repaint();
+    }
     //end{body}}
     //begin{termination}
     cwattroff(1, COLOR_PAIR(1));
-    //cwattroff(2, COLOR_PAIR(2));
+    cwattroff(2, COLOR_PAIR(2));
     endwin();
     return EXIT_SUCCESS;
     //end{termination}

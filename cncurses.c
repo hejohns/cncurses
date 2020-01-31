@@ -1,12 +1,19 @@
 #include "macros.h"
-#include <curses.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include "cncurses.h"
 #include "misc.h"
 
+
+sigset_t sigwinch_mask;
 WINDOW* cwindows[WINDOWS_MAX] = {NULL};
+// y, x, beg_y, begin_x
+int cwinparams[WINDOWS_MAX][4] = {{0}};
+int cwincolors[WINDOWS_MAX];
+bool cwinch = false;
 
 screen_buffer buffer={
     .push=&screen_buffer_push,
@@ -28,6 +35,8 @@ void cinit(int num, ...){
     va_start(args, num);
     for(int i=1; i<=num; i++){
         cwindows[i] = va_arg(args, WINDOW*);
+        getmaxyx(cwindows[i], cwinparams[i][0], cwinparams[i][1]);
+        getbegyx(cwindows[i], cwinparams[i][2], cwinparams[i][3]);
     }
     va_end(args);
 }
@@ -45,23 +54,7 @@ void sigwinch_initialize(){
 }
 
 void sigwinch_handler(){
-    endwin();
-    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
-        wrefresh(cwindows[i]);
-        wclear(cwindows[i]);
-    }
-    getmaxyx(stdscr, cROWS, cCOLS);
-    resizeterm(cROWS, cCOLS);
-    //
-    buffer.repaint();
-    //
-    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
-        wrefresh(cwindows[i]);
-    }
-    //for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
-    //    wrefresh(cwindows[i]);
-        //wgetch(cwindows[i]);
-    //}
+    cwinch = true;
 }
 
 void screen_buffer_push(char* command){
@@ -190,7 +183,7 @@ void cwprintw(int win, const char* fmt, ...){
     }
     int numArgs = 0;
     for(int i=0; i<strlen(fmt); i++){
-        if(fmt[0] == '%'){
+        if(fmt[i] == '%'){
             numArgs++;
         }
     }
@@ -261,357 +254,382 @@ void cwhline(int win, char ch, int n){
 }
 
 void screen_buffer_repaint(){
-    if(buffer.size()==0){
-        return;
-    }
-    if(buffer.size()>=BUFFER_ROWS_MAX){
-        panic("buffer corrupted", EXIT_FAILURE);
-    }
-    for(size_t i=0; i<buffer.size(); i++){
-        int cfunc = opcode(buffer.at(i));
-        switch(cfunc){
-        case 0:
-            //print delimeter
-            printw(DELIM);
-            break;
-        case 1:
-            // getyx
-            // args: WINDOW* 
-            {
+    if(cwinch){
+        cwinch = false;
+        for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+            //wclear(cwindows[i]);
+            wrefresh(cwindows[i]);
+        }
+        //endwin();
+        resizeterm(cROWS, cCOLS);
+        getmaxyx(stdscr, cROWS, cCOLS);
+        for(int i=WINDOWS_MAX-1; i>=1; i--){
+            if(cwindows[i] == NULL){
+                continue;
+            }
+            wattroff(cwindows[i], cwincolors[i]);
+            delwin(cwindows[i]);
+            cwindows[i] = newwin(cwinparams[i][0], cwinparams[i][1], cwinparams[i][2], cwinparams[i][3]);
+            wattron(cwindows[i], cwincolors[i]);
+        }
+        if(buffer.size()==0){
+            return;
+        }
+        if(buffer.size()>=BUFFER_ROWS_MAX){
+            panic("buffer corrupted", EXIT_FAILURE);
+        }
+        for(size_t i=0; i<buffer.size(); i++){
+            int cfunc = opcode(buffer.at(i));
+            switch(cfunc){
+            case 0:
+                //print delimeter
+                printw(DELIM);
+                break;
+            case 1:
+                // getyx
+                // args: WINDOW* 
+                {
+                    char* preserve = strdup(buffer.at(i));
+                    char* token = strtok(buffer.at(i), DELIM);
+                    token = strtok(NULL, DELIM);
+                    int win = atoi(token);
+                    getyx(cwindows[win], Y[win], X[win]);
+                    strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 2:;
+                // wmove
+                // args: win, y,x
+                {
                 char* preserve = strdup(buffer.at(i));
                 char* token = strtok(buffer.at(i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
-                getyx(cwindows[win], Y[win], X[win]);
+                token = strtok(NULL, DELIM);
+                int y = atoi(token);
+                token = strtok(NULL, DELIM);
+                int x = atoi(token);
+                wmove(cwindows[win], y, x);
                 strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 3:;
+                // wmove_r 
+                // args: win, dy,dx
+                {
+                char* preserve = strdup(buffer.at(i));
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                token = strtok(NULL, DELIM);
+                int dy = atoi(token);
+                token = strtok(NULL, DELIM);
+                int dx = atoi(token);
+                wmove(cwindows[win], Y[win]+dy, X[win]+dx);
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 4:;
+                // wmove_p
+                // args: win, percenty,percentx
+                {
+                char* preserve = strdup(buffer.at(i));
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                token = strtok(NULL, DELIM);
+                double py = atof(token);
+                token = strtok(NULL, DELIM);
+                double px = atof(token);
+                wmove(cwindows[win], (int)cROWS*py, (int)cCOLS*px);
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 5:;
+                //wrefresh
+                //args: win
+                {
+                char* preserve = strdup(buffer.at(i));
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                wrefresh(cwindows[win]);
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 6:
+                break;
+            case 7:
+                break;
+            case 8:
+                break;
+            case 9:
+                break;
+            case 10:
+                break;
+            case 11:;
+                // wprintw single string
+                // args: win, str
+                {
+                //strtok destroys original. Must preserve copy.
+                char* preserve = strdup(buffer.at(i));
+                //first token is opcode- throw away
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                token = strtok(NULL, DELIM);
+                char* str = strdup(token);
+                wprintw(cwindows[win], "%s", str);
+                //restore copy
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 12:;
+                // wprintw single decimal
+                // args: win, dec
+                {
+                //strtok destroys original. Must preserve copy.
+                char* preserve = strdup(buffer.at(i));
+                //first token is opcode- throw away
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                token = strtok(NULL, DELIM);
+                int dec = atoi(token);
+                wprintw(cwindows[win], "%d", dec);
+                //restore copy
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 13:;
+                // wprintw single float
+                // args: win, flt
+                {
+                //strtok destroys original. Must preserve copy.
+                char* preserve = strdup(buffer.at(i));
+                //first token is opcode- throw away
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                token = strtok(NULL, DELIM);
+                double flt = atof(token);
+                wprintw(cwindows[win], "%f", flt);
+                //restore copy
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 14:
+                break;
+            case 15:
+                break;
+            case 16:
+                break;
+            case 17:
+                break;
+            case 18:
+                break;
+            case 19:
+                break;
+            case 20:
+                break;
+            case 21:;
+                // wvline
+                // args: ch, n
+                {
+                char* preserve = strdup(buffer.at(i));
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                token = strtok(NULL, DELIM);
+                char ch = token[0];
+                token = strtok(NULL, DELIM);
+                int n = atoi(token);
+                wvline(cwindows[win], ch, n);
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 22:;
+                // whline
+                // args: ch, n
+                {
+                char* preserve = strdup(buffer.at(i));
+                char* token = strtok(buffer.at(i), DELIM);
+                token = strtok(NULL, DELIM);
+                int win = atoi(token);
+                token = strtok(NULL, DELIM);
+                char ch = token[0];
+                token = strtok(NULL, DELIM);
+                int n = atoi(token);
+                whline(cwindows[win], ch, n);
+                strcpy(buffer.at(i), preserve);
+                }
+                break;
+            case 23:
+                break;
+            case 24:
+                break;
+            case 25:
+                break;
+            case 26:
+                break;
+            case 27:
+                break;
+            case 28:
+                break;
+            case 29:
+                break;
+            case 30:
+                break;
+            case 31:
+                break;
+            case 32:
+                break;
+            case 33:
+                break;
+            case 34:
+                break;
+            case 35:
+                break;
+            case 36:
+                break;
+            case 37:
+                break;
+            case 38:
+                break;
+            case 39:
+                break;
+            case 40:
+                break;
+            case 41:
+                break;
+            case 42:
+                break;
+            case 43:
+                break;
+            case 44:
+                break;
+            case 45:
+                break;
+            case 46:
+                break;
+            case 47:
+                break;
+            case 48:
+                break;
+            case 49:
+                break;
+            case 50:
+                break;
+            case 51:
+                break;
+            case 52:
+                break;
+            case 53:
+                break;
+            case 54:
+                break;
+            case 55:
+                break;
+            case 56:
+                break;
+            case 57:
+                break;
+            case 58:
+                break;
+            case 59:
+                break;
+            case 60:
+                break;
+            case 61:
+                break;
+            case 62:
+                break;
+            case 63:
+                break;
+            case 64:
+                break;
+            case 65:
+                break;
+            case 66:
+                break;
+            case 67:
+                break;
+            case 68:
+                break;
+            case 69:
+                break;
+            case 70:
+                break;
+            case 71:
+                break;
+            case 72:
+                break;
+            case 73:
+                break;
+            case 74:
+                break;
+            case 75:
+                break;
+            case 76:
+                break;
+            case 77:
+                break;
+            case 78:
+                break;
+            case 79:
+                break;
+            case 80:
+                break;
+            case 81:
+                break;
+            case 82:
+                break;
+            case 83:
+                break;
+            case 84:
+                break;
+            case 85:
+                break;
+            case 86:
+                break;
+            case 87:
+                break;
+            case 88:
+                break;
+            case 89:
+                break;
+            case 90:
+                break;
+            case 91:
+                break;
+            case 92:
+                break;
+            case 93:
+                break;
+            case 94:
+                break;
+            case 95:
+                break;
+            case 96:
+                break;
+            case 97:
+                break;
+            case 98:
+                break;
+            case 99:
+                break;
+            case 100:
+                break;
+            default:
+                panic("opcode invalid", EXIT_FAILURE);
+                break;
             }
-            break;
-        case 2:;
-            // wmove
-            // args: win, y,x
-            {
-            char* preserve = strdup(buffer.at(i));
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            int y = atoi(token);
-            token = strtok(NULL, DELIM);
-            int x = atoi(token);
-            wmove(cwindows[win], y, x);
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 3:;
-            // wmove_r 
-            // args: win, dy,dx
-            {
-            char* preserve = strdup(buffer.at(i));
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            int dy = atoi(token);
-            token = strtok(NULL, DELIM);
-            int dx = atoi(token);
-            wmove(cwindows[win], Y[win]+dy, X[win]+dx);
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 4:;
-            // wmove_p
-            // args: win, percenty,percentx
-            {
-            char* preserve = strdup(buffer.at(i));
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            double py = atof(token);
-            token = strtok(NULL, DELIM);
-            double px = atof(token);
-            wmove(cwindows[win], (int)cROWS*py, (int)cCOLS*px);
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 5:;
-            //wrefresh
-            //args: win
-            {
-            char* preserve = strdup(buffer.at(i));
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            wrefresh(cwindows[win]);
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 6:
-            break;
-        case 7:
-            break;
-        case 8:
-            break;
-        case 9:
-            break;
-        case 10:
-            break;
-        case 11:;
-            // wprintw single string
-            // args: win, str
-            {
-            //strtok destroys original. Must preserve copy.
-            char* preserve = strdup(buffer.at(i));
-            //first token is opcode- throw away
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            char* str = strdup(token);
-            wprintw(cwindows[win], "%s", str);
-            //restore copy
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 12:;
-            // wprintw single decimal
-            // args: win, dec
-            {
-            //strtok destroys original. Must preserve copy.
-            char* preserve = strdup(buffer.at(i));
-            //first token is opcode- throw away
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            int dec = atoi(token);
-            wprintw(cwindows[win], "%d", dec);
-            //restore copy
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 13:;
-            // wprintw single float
-            // args: win, flt
-            {
-            //strtok destroys original. Must preserve copy.
-            char* preserve = strdup(buffer.at(i));
-            //first token is opcode- throw away
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            double flt = atof(token);
-            wprintw(cwindows[win], "%f", flt);
-            //restore copy
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 14:
-            break;
-        case 15:
-            break;
-        case 16:
-            break;
-        case 17:
-            break;
-        case 18:
-            break;
-        case 19:
-            break;
-        case 20:
-            break;
-        case 21:;
-            // wvline
-            // args: ch, n
-            {
-            char* preserve = strdup(buffer.at(i));
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            char ch = token[0];
-            token = strtok(NULL, DELIM);
-            int n = atoi(token);
-            wvline(cwindows[win], ch, n);
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 22:;
-            // whline
-            // args: ch, n
-            {
-            char* preserve = strdup(buffer.at(i));
-            char* token = strtok(buffer.at(i), DELIM);
-            token = strtok(NULL, DELIM);
-            int win = atoi(token);
-            token = strtok(NULL, DELIM);
-            char ch = token[0];
-            token = strtok(NULL, DELIM);
-            int n = atoi(token);
-            whline(cwindows[win], ch, n);
-            strcpy(buffer.at(i), preserve);
-            }
-            break;
-        case 23:
-            break;
-        case 24:
-            break;
-        case 25:
-            break;
-        case 26:
-            break;
-        case 27:
-            break;
-        case 28:
-            break;
-        case 29:
-            break;
-        case 30:
-            break;
-        case 31:
-            break;
-        case 32:
-            break;
-        case 33:
-            break;
-        case 34:
-            break;
-        case 35:
-            break;
-        case 36:
-            break;
-        case 37:
-            break;
-        case 38:
-            break;
-        case 39:
-            break;
-        case 40:
-            break;
-        case 41:
-            break;
-        case 42:
-            break;
-        case 43:
-            break;
-        case 44:
-            break;
-        case 45:
-            break;
-        case 46:
-            break;
-        case 47:
-            break;
-        case 48:
-            break;
-        case 49:
-            break;
-        case 50:
-            break;
-        case 51:
-            break;
-        case 52:
-            break;
-        case 53:
-            break;
-        case 54:
-            break;
-        case 55:
-            break;
-        case 56:
-            break;
-        case 57:
-            break;
-        case 58:
-            break;
-        case 59:
-            break;
-        case 60:
-            break;
-        case 61:
-            break;
-        case 62:
-            break;
-        case 63:
-            break;
-        case 64:
-            break;
-        case 65:
-            break;
-        case 66:
-            break;
-        case 67:
-            break;
-        case 68:
-            break;
-        case 69:
-            break;
-        case 70:
-            break;
-        case 71:
-            break;
-        case 72:
-            break;
-        case 73:
-            break;
-        case 74:
-            break;
-        case 75:
-            break;
-        case 76:
-            break;
-        case 77:
-            break;
-        case 78:
-            break;
-        case 79:
-            break;
-        case 80:
-            break;
-        case 81:
-            break;
-        case 82:
-            break;
-        case 83:
-            break;
-        case 84:
-            break;
-        case 85:
-            break;
-        case 86:
-            break;
-        case 87:
-            break;
-        case 88:
-            break;
-        case 89:
-            break;
-        case 90:
-            break;
-        case 91:
-            break;
-        case 92:
-            break;
-        case 93:
-            break;
-        case 94:
-            break;
-        case 95:
-            break;
-        case 96:
-            break;
-        case 97:
-            break;
-        case 98:
-            break;
-        case 99:
-            break;
-        case 100:
-            break;
-        default:
-            panic("opcode invalid", EXIT_FAILURE);
-            break;
         }
+        for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+            wrefresh(cwindows[i]);
+        }
+    }
+    else{
+        //do nothing
     }
 }

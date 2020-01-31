@@ -11,7 +11,6 @@
 
 #define panic(mesg, exit_code) fprintf(stderr, "Fatal: "mesg", %s, %d", __FILE__, __LINE__); exit(exit_code)
 
-
 #define HAS_COLOR 1
 #ifdef HAS_COLOR
 
@@ -22,7 +21,8 @@
     init_pair(__VA_ARGS__)
 
 #define cwattron(x, y) if(has_colors())\
-    wattron(cwindows[x], y)
+    wattron(cwindows[x], y);\
+    cwincolors[x] = y
 
 #define cwattroff(x, y) if(has_colors())\
     wattroff(cwindows[x], y)
