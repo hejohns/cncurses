@@ -11,7 +11,7 @@
 sigset_t sigwinch_mask;
 WINDOW* cwindows[WINDOWS_MAX] = {NULL};
 // y, x, beg_y, begin_x
-int cwinparams[WINDOWS_MAX][4] = {{0}};
+double cwinparams[WINDOWS_MAX][4] = {{0}};
 int cwincolors[WINDOWS_MAX];
 bool cwinch = false;
 
@@ -35,13 +35,12 @@ void cinit(int num, ...){
     va_start(args, num);
     for(int i=1; i<=num; i++){
         cwindows[i] = va_arg(args, WINDOW*);
-        int tmp0, tmp1, tmp2, tmp3;
-        getmaxyx(cwindows[i], tmp0, tmp1);
-        getbegyx(cwindows[i], tmp2, tmp3);
-        cwinparams[i][0] = tmp0/cROWS;
-        cwinparams[i][1] = tmp1/cCOLS;
-        cwinparams[i][2] = tmp2/cROWS;
-        cwinparams[i][3] = tmp3/cCOLS;
+        getmaxyx(cwindows[i], cwinparams[i][0], cwinparams[i][1]);
+        getbegyx(cwindows[i], cwinparams[i][2], cwinparams[i][3]);
+        cwinparams[i][0] /= cROWS;
+        cwinparams[i][1] /= cCOLS;
+        cwinparams[i][2] /= cROWS;
+        cwinparams[i][3] /= cCOLS;
     }
     va_end(args);
 }
@@ -278,7 +277,7 @@ void screen_buffer_repaint(){
             }
             wattroff(cwindows[i], cwincolors[i]);
             delwin(cwindows[i]);
-            cwindows[i] = newwin(cwinparams[i][0]*cROWS, cwinparams[i][1]*cCOLS, cwinparams[i][2]*cROWS, cwinparams[i][3]*cCOLS);
+            cwindows[i] = newwin((int)cwinparams[i][0]*cROWS, (int)cwinparams[i][1]*cCOLS, (int)cwinparams[i][2]*cROWS, (int)cwinparams[i][3]*cCOLS);
             wattron(cwindows[i], cwincolors[i]);
         }
         if(buffer.size()==0){
