@@ -23,7 +23,8 @@ int main(int argc, char** argv){
         fopen("/dev/null", "w");
         fclose(stderr);
         fopen("/dev/null", "w");
-        execlp("gdb", "gdb", (char*)NULL);
+        fclose(stdin);
+        //execlp("gdb", "gdb", (char*)NULL);
         return 0;
     }
     else{
@@ -36,7 +37,8 @@ int main(int argc, char** argv){
             fopen("/dev/null", "w");
             fclose(stderr);
             fopen("/dev/null", "w");
-            execlp("gdb", "gdb", (char*)NULL);
+            fclose(stdin);
+            //execlp("gdb", "gdb", (char*)NULL);
             return 0;
         }
         else{
@@ -82,9 +84,10 @@ parent:
     //cprintw("%d-%d,", 10, 20);
     //cprintw("%f-%f", .100, .200);
     //crefresh();
-    echo();
+    //echo();
     //cclear();
     int ch;
+    flushinp();
     while((ch = getch()) != KEY_RIGHT){
         switch(ch){
             case KEY_LEFT:
@@ -100,13 +103,14 @@ parent:
                 cwinch = true;
                 break;
             default:
-                refresh();
+                printw("%c", ch);
+                //refresh();
                 //ungetch(ch);
                 //buffer.repaint();
                 //ch = wgetch(win1);
                 break;
         }
-        //buffer.repaint();
+        buffer.repaint();
     }
     //end{body}}
     //begin{termination}

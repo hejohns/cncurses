@@ -256,11 +256,15 @@ void cwhline(int win, char ch, int n){
 void screen_buffer_repaint(){
     if(cwinch){
         cwinch = false;
-        for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
-            //wclear(cwindows[i]);
+        for(int i=WINDOWS_MAX-1; i>=0; i--){
+            if(cwindows[i] == NULL){
+                continue;
+            }
+            wclear(cwindows[i]);
             wrefresh(cwindows[i]);
         }
-        //endwin();
+        endwin();
+        refresh();
         resizeterm(cROWS, cCOLS);
         getmaxyx(stdscr, cROWS, cCOLS);
         for(int i=WINDOWS_MAX-1; i>=1; i--){
