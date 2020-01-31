@@ -277,7 +277,7 @@ void screen_buffer_repaint(){
             }
             wattroff(cwindows[i], cwincolors[i]);
             delwin(cwindows[i]);
-            cwindows[i] = newwin((int)cwinparams[i][0]*cROWS, (int)cwinparams[i][1]*cCOLS, (int)cwinparams[i][2]*cROWS, (int)cwinparams[i][3]*cCOLS);
+            cwindows[i] = newwin((int)(cwinparams[i][0]*cROWS), (int)(cwinparams[i][1]*cCOLS), (int)(cwinparams[i][2]*cROWS), (int)(cwinparams[i][3]*cCOLS));
             wattron(cwindows[i], cwincolors[i]);
         }
         if(buffer.size()==0){
