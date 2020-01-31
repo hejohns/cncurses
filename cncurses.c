@@ -6,6 +6,8 @@
 #include "cncurses.h"
 #include "misc.h"
 
+WINDOW* cwindows[WINDOWS_MAX] = {NULL};
+
 screen_buffer buffer={
     .push=&screen_buffer_push,
     .pop=&screen_buffer_pop,
@@ -44,19 +46,21 @@ void sigwinch_initialize(){
 
 void sigwinch_handler(){
     endwin();
-    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
-        wclear(cwindows[i]);
-        wrefresh(cwindows[i]);
-        wmove(cwindows[i], 0, 0);
-    }
+    //for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+    //    wrefresh(cwindows[i]);
+    //    //wclear(cwindows[i]);
+    //    wmove(cwindows[i], 0, 0);
+    //}
     getmaxyx(stdscr, cROWS, cCOLS);
     resizeterm(cROWS, cCOLS);
     //
     buffer.repaint();
     //
-    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
-        wrefresh(cwindows[i]);
-    }
+    //for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+    //    wrefresh(cwindows[i]);
+        //wgetch(cwindows[i]);
+    //}
+    refresh();
 }
 
 void screen_buffer_push(char* command){
@@ -66,7 +70,7 @@ void screen_buffer_push(char* command){
     if(strlen(command) >= BUFFER_COLS_MAX){
         panic("command too long", EXIT_FAILURE);
     }
-    strcpy(buffer.at(buffer.size()), command);
+    strcpy(buffer.queue[buffer.size()], command);
     buffer.rows++;
 }
 

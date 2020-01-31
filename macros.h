@@ -1,3 +1,7 @@
+//macros.h
+#ifndef MACROS_H
+#define MACROS_H
+
 #define str(...) #__VA_ARGS__
 
 #define DELIM "^"
@@ -18,9 +22,11 @@
     init_pair(__VA_ARGS__)
 
 #define cwattron(x, y) if(has_colors())\
-    wattron(windows[x], y)
+    wattron(cwindows[x], y)
 
 #define cwattroff(x, y) if(has_colors())\
-    wattroff(windows[x], y)
+    wattroff(cwindows[x], y)
 
 #endif
+
+#endif /* MACROS_H */

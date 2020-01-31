@@ -53,9 +53,7 @@ parent:
     clear();
     refresh();
     cwprintw(1, "%s", "Helloooooooo\n|WOOOOORRRLF");
-    cwrefresh(1);
     cwprintw(2, "%s", "YELLLLLOOO\n|WOOOOORRRLF");
-    cwrefresh(2);
     //end{initialization}
     //begin{body]
     //cmove(0,0);
@@ -70,7 +68,6 @@ parent:
     //cprintw("%d-%d,", 10, 20);
     //cprintw("%f-%f", .100, .200);
     //crefresh();
-    refresh();
     echo();
     //cclear();
     while(true){}

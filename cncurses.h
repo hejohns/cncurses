@@ -1,6 +1,6 @@
 //cncurses.h
-#ifndef CURTEX_H
-#define CURTEX_H
+#ifndef CNCURSES_H
+#define CNCURSES_H
 
 #include <curses.h>
 #include <signal.h>
@@ -14,7 +14,7 @@ sigset_t sigwinch_mask;
 int cROWS, cCOLS;
 int Y[WINDOWS_MAX];
 int X[WINDOWS_MAX];
-WINDOW* cwindows[WINDOWS_MAX] = {NULL};
+extern WINDOW* cwindows[WINDOWS_MAX];
 
 /* REQUIRES: number of arguments of type WINDOW* < WINDOWS_MAX
  * MODIFIES: none
@@ -134,4 +134,4 @@ void clearBuf();
 void cwprintw(int win, const char* fmt, ...);
 void cwvline(int win, char ch, int n);
 void cwhline(int win, char ch, int n);
-#endif /* CURTEX_H */
+#endif /* CNCURSES_H */
