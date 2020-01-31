@@ -50,42 +50,40 @@ parent:
     waitpid(forkreturn2, NULL, WNOHANG);
     sigwinch_initialize();
     initscr();
+    getmaxyx(stdscr, cROWS, cCOLS);
     timeout(-1);
     cstart_color();
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
     cinit_pair(2, COLOR_BLUE, COLOR_BLACK);
-    WINDOW* win1 = newwin(10,20, 5, 10);
-    WINDOW* win2 = newwin(10, 20, 5, 40);
-    cinit(2, win1, win2);
-    //cinit(1, win1);
+    cinit_pair(3, COLOR_WHITE, COLOR_BLACK);
+    WINDOW* win1 = cnewwin(1,.5, 0, 0);
+    WINDOW* win2 = cnewwin(.5, .5, 0, .5);
+    WINDOW* win3 = cnewwin(.5, .5, .5, .5);
+    cinit(3, win1, win2, win3);
     cwattron(1, COLOR_PAIR(1));
     cwattron(2, COLOR_PAIR(2));
-    getmaxyx(stdscr, cROWS, cCOLS);
+    cwattron(3, COLOR_PAIR(3));
+    //getmaxyx(stdscr, cROWS, cCOLS);
     cbreak();
     keypad(stdscr, TRUE);
     noecho();
     clear();
     refresh();
-    cwprintw(1, "%s", "Helloooooooo\n|WOOOOORRRLF");
-    cwprintw(2, "%s", "YELLLLLOOO\n|WOOOOORRRLF");
-    cwinch = true;
-    buffer.repaint();
+    box(win1, 0, 0);
+    box(win2, 0, 0);
+    box(win3, 0, 0);
+    wprintw(win1, "%s", "WIN1");
+    wprintw(win2, "%s", "WIN2");
+    wprintw(win3, "%s", "WIN3");
+    wrefresh(win1);
+    wrefresh(win2);
+    wrefresh(win3);
+    wclear(win1);
+    wrefresh(win1);
+    //cwinch = true;
+    //buffer.repaint();
     //end{initialization}
     //begin{body]
-    //cmove(0,0);
-    //cvline('|', 20);
-    //cmove_r(0, 1);
-    //cvline('|', 20);
-    //cmove_r(0, 2);
-    //cvline('|', 20);
-    //cmove_p(.50,.50);
-    ////cgetyx();
-    //cprintw("%s\n%s\n%s", "Hello", "Cruel", "World");
-    //cprintw("%d-%d,", 10, 20);
-    //cprintw("%f-%f", .100, .200);
-    //crefresh();
-    //echo();
-    //cclear();
     int ch;
     flushinp();
     while((ch = getch()) != KEY_RIGHT){
@@ -96,10 +94,6 @@ parent:
                 wrefresh(win1);
                 break;
             case KEY_UP:
-                cwattroff(1, COLOR_PAIR(1));
-                delwin(win1);
-                win1=newwin(10,20,5,10);
-                cwattron(1, COLOR_PAIR(1));
                 cwinch = true;
                 break;
             default:
@@ -110,12 +104,13 @@ parent:
                 //ch = wgetch(win1);
                 break;
         }
-        buffer.repaint();
+        //buffer.repaint();
     }
     //end{body}}
     //begin{termination}
     cwattroff(1, COLOR_PAIR(1));
     cwattroff(2, COLOR_PAIR(2));
+    cwattroff(3, COLOR_PAIR(3));
     endwin();
     return EXIT_SUCCESS;
     //end{termination}

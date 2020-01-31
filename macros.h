@@ -11,6 +11,9 @@
 
 #define panic(mesg, exit_code) fprintf(stderr, "Fatal: "mesg", %s, %d", __FILE__, __LINE__); exit(exit_code)
 
+
+#define cnewwin(a, b, c, d) newwin(a*cROWS, b*cCOLS, c*cROWS, d*cCOLS)
+
 #define HAS_COLOR 1
 #ifdef HAS_COLOR
 

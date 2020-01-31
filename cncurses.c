@@ -37,6 +37,10 @@ void cinit(int num, ...){
         cwindows[i] = va_arg(args, WINDOW*);
         getmaxyx(cwindows[i], cwinparams[i][0], cwinparams[i][1]);
         getbegyx(cwindows[i], cwinparams[i][2], cwinparams[i][3]);
+        cwinparams[i][0] /= cROWS;
+        cwinparams[i][1] /= cCOLS;
+        cwinparams[i][2] /= cROWS;
+        cwinparams[i][3] /= cCOLS;
     }
     va_end(args);
 }
@@ -273,7 +277,7 @@ void screen_buffer_repaint(){
             }
             wattroff(cwindows[i], cwincolors[i]);
             delwin(cwindows[i]);
-            cwindows[i] = newwin(cwinparams[i][0], cwinparams[i][1], cwinparams[i][2], cwinparams[i][3]);
+            cwindows[i] = newwin(cwinparams[i][0]*cROWS, cwinparams[i][1]*cCOLS, cwinparams[i][2]*cROWS, cwinparams[i][3]*cCOLS);
             wattron(cwindows[i], cwincolors[i]);
         }
         if(buffer.size()==0){
@@ -629,7 +633,10 @@ void screen_buffer_repaint(){
                 break;
             }
         }
-        for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+        for(int i=WINDOWS_MAX-1; i>=0; i--){
+            if(cwindows[i] == NULL){
+                continue;
+            }
             wrefresh(cwindows[i]);
         }
     }
