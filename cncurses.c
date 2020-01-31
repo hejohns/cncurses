@@ -269,8 +269,8 @@ void screen_buffer_repaint(){
         }
         endwin();
         refresh();
-        resizeterm(cROWS, cCOLS);
         getmaxyx(stdscr, cROWS, cCOLS);
+        resizeterm(cROWS, cCOLS);
         for(int i=WINDOWS_MAX-1; i>=1; i--){
             if(cwindows[i] == NULL){
                 continue;

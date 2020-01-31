@@ -69,19 +69,21 @@ parent:
     noecho();
     clear();
     refresh();
+    cwprintw(1, "%s", "WIN1");
+    cwprintw(2, "%s", "WIN2");
+    cwprintw(3, "%s", "WIN3");
+    /*
     box(win1, 0, 0);
     box(win2, 0, 0);
     box(win3, 0, 0);
-    wprintw(win1, "%s", "WIN1");
-    wprintw(win2, "%s", "WIN2");
-    wprintw(win3, "%s", "WIN3");
     wrefresh(win1);
     wrefresh(win2);
     wrefresh(win3);
     wclear(win1);
     wrefresh(win1);
-    //cwinch = true;
-    //buffer.repaint();
+    */
+    cwinch = true;
+    buffer.repaint();
     //end{initialization}
     //begin{body]
     int ch;
