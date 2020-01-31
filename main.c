@@ -19,6 +19,7 @@ int main(int argc, char** argv){
         panic("fork1 failed", EXIT_FAILURE);
     }
     else if(forkreturn1 == 0){
+        execlp("gdb", "gdb", (char*)NULL);
         return 0;
     }
     else{
@@ -27,6 +28,7 @@ int main(int argc, char** argv){
             panic("fork2 failed", EXIT_FAILURE);
         }
         else if(forkreturn2 == 0){
+            execlp("gdb", "gdb", (char*)NULL);
             return 0;
         }
         else{
@@ -42,10 +44,11 @@ parent:
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
     cinit_pair(2, COLOR_BLUE, COLOR_BLACK);
     WINDOW* win1 = newwin(10,20, 5, 10);
-    WINDOW* win2 = newwin(10, 20, 5, 30);
-    cinit(2, win1, win2);
+    //WINDOW* win2 = newwin(10, 20, 5, 30);
+    //cinit(2, win1, win2);
+    cinit(1, win1);
     cwattron(1, COLOR_PAIR(1));
-    cwattron(2, COLOR_PAIR(2));
+    //cwattron(2, COLOR_PAIR(2));
     getmaxyx(stdscr, cROWS, cCOLS);
     cbreak();
     keypad(stdscr, TRUE);
@@ -53,7 +56,7 @@ parent:
     clear();
     refresh();
     cwprintw(1, "%s", "Helloooooooo\n|WOOOOORRRLF");
-    cwprintw(2, "%s", "YELLLLLOOO\n|WOOOOORRRLF");
+    //cwprintw(2, "%s", "YELLLLLOOO\n|WOOOOORRRLF");
     //end{initialization}
     //begin{body]
     //cmove(0,0);
@@ -68,13 +71,13 @@ parent:
     //cprintw("%d-%d,", 10, 20);
     //cprintw("%f-%f", .100, .200);
     //crefresh();
-    echo();
+    //echo();
     //cclear();
     while(true){}
     //end{body}}
     //begin{termination}
     cwattroff(1, COLOR_PAIR(1));
-    cwattroff(2, COLOR_PAIR(2));
+    //cwattroff(2, COLOR_PAIR(2));
     endwin();
     return EXIT_SUCCESS;
     //end{termination}

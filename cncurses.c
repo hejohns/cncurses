@@ -46,21 +46,22 @@ void sigwinch_initialize(){
 
 void sigwinch_handler(){
     endwin();
-    //for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
-    //    wrefresh(cwindows[i]);
-    //    //wclear(cwindows[i]);
-    //    wmove(cwindows[i], 0, 0);
-    //}
+    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+        wrefresh(cwindows[i]);
+        wclear(cwindows[i]);
+    }
     getmaxyx(stdscr, cROWS, cCOLS);
     resizeterm(cROWS, cCOLS);
     //
     buffer.repaint();
     //
+    for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
+        wrefresh(cwindows[i]);
+    }
     //for(int i=0; i<WINDOWS_MAX && cwindows[i]!=NULL; i++){
     //    wrefresh(cwindows[i]);
         //wgetch(cwindows[i]);
     //}
-    refresh();
 }
 
 void screen_buffer_push(char* command){
@@ -91,7 +92,7 @@ size_t screen_buffer_size(){
 }
 
 char* screen_buffer_at(size_t index){
-    if(index >= buffer.size() || index < 0){
+    if(index >= buffer.size()){
         panic("index out of range", EXIT_FAILURE);
     }
     return buffer.queue[index];
