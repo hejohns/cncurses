@@ -92,9 +92,8 @@ parent:
     while((ch = getch()) != KEY_RIGHT){
         switch(ch){
             case KEY_LEFT:
-                wclear(win1);
-                wprintw(win1, "hi");
-                wrefresh(win1);
+                cgetyx(3);
+                cwmove_r(3, Y[1]+1, X[1]-1);
                 break;
             case KEY_UP:
                 raise(SIGWINCH);

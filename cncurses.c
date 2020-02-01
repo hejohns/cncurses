@@ -138,12 +138,6 @@ void cwmove_r(int win, int dy, int dx){
     if(win < 0 || win >= WINDOWS_MAX){
         panic("win out of range", EXIT_FAILURE);
     }
-    if(Y[win] + dy < 0 || Y[win] + dy > cROWS){
-        panic("dy out of bounds", EXIT_FAILURE);
-    }
-    if(X[win] + dx < 0 || X[win] + dx > cCOLS){
-        panic("dx out of bounds", EXIT_FAILURE);
-    }
     char str1[BUFFER_COLS_MAX];
     sprintf(str1, "003"DELIM"%d"DELIM"%d"DELIM"%d", win, dy, dx);
     buffer.push(str1);
@@ -152,12 +146,6 @@ void cwmove_r(int win, int dy, int dx){
 void cwmove_p(int win, double py, double px){
     if(win < 0 || win >= WINDOWS_MAX){
         panic("win out of range", EXIT_FAILURE);
-    }
-    if(py < 0 || py > 100){
-        panic("dy out of bounds", EXIT_FAILURE);
-    }
-    if(px < 0 || px > 100){
-        panic("dx out of bounds", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
     sprintf(str1, "004"DELIM"%d"DELIM"%f"DELIM"%f", win, py, px);
@@ -330,6 +318,12 @@ void screen_buffer_repaint(){
                 int dy = atoi(token);
                 token = strtok(NULL, DELIM);
                 int dx = atoi(token);
+                if(Y[win] + dy < 0 || Y[win] + dy > cROWS){
+                    panic("dy out of bounds", EXIT_FAILURE);
+                }
+                if(X[win] + dx < 0 || X[win] + dx > cCOLS){
+                    panic("dx out of bounds", EXIT_FAILURE);
+                }
                 wmove(cwindows[win], Y[win]+dy, X[win]+dx);
                 strcpy(buffer.at(i), preserve);
                 }
@@ -346,6 +340,12 @@ void screen_buffer_repaint(){
                 double py = atof(token);
                 token = strtok(NULL, DELIM);
                 double px = atof(token);
+                if(py < 0 || py > 100){
+                    panic("dy out of bounds", EXIT_FAILURE);
+                }
+                if(px < 0 || px > 100){
+                    panic("dx out of bounds", EXIT_FAILURE);
+                }
                 wmove(cwindows[win], (int)cROWS*py, (int)cCOLS*px);
                 strcpy(buffer.at(i), preserve);
                 }
