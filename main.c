@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <signal.h>
 #include <curses.h>
 #include <sys/types.h>
@@ -51,7 +52,7 @@ parent:
     sigwinch_initialize();
     initscr();
     getmaxyx(stdscr, cROWS, cCOLS);
-    timeout(1000);
+    timeout(10);
     cstart_color();
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
     cinit_pair(2, COLOR_BLUE, COLOR_BLACK);
@@ -100,7 +101,7 @@ parent:
                 //cwinch = true;
                 break;
             case ERR:
-                cwprintw(2, "%s", "9");
+                //cwprintw(2, "%s", "9");
                 cwinch = true;
                 buffer.repaint();
                 break;
@@ -108,7 +109,9 @@ parent:
                 char str[2];
                 str[0] = ch;
                 str[1] = '\0';
-                cwprintw(3, "%s", str);
+                if(isascii(ch)){
+                    cwprintw(3, "%s", str);
+                }
                 //refresh();
                 //ungetch(ch);
                 //buffer.repaint();
