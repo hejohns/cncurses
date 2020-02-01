@@ -5,7 +5,7 @@
 #define str(...) #__VA_ARGS__
 
 #define DELIM "^"
-#define BUFFER_ROWS_MAX 800
+#define BUFFER_ROWS_MAX 8000
 #define BUFFER_COLS_MAX 20
 #define WINDOWS_MAX 5
 
