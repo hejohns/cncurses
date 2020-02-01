@@ -76,10 +76,7 @@ char* screen_buffer_pop(char* dest){
     if(buffer.size()==0){
         panic("buffer is empty; nothing to pop", EXIT_FAILURE);
     }
-    dest=strcpy(dest, buffer.at(0));
-    for(size_t i=1; i<buffer.size(); i++){
-        strcpy(buffer.at(i-1), buffer.at(i));
-    }
+    dest=strcpy(dest, buffer.at(buffer.size()-1));
     buffer.rows--;
     return dest;
 }

@@ -100,6 +100,10 @@ parent:
                 raise(SIGWINCH);
                 //cwinch = true;
                 break;
+            case KEY_BACKSPACE:;
+                char nil[BUFFER_COLS_MAX];
+                buffer.pop(nil);
+                break;
             case ERR:
                 //cwprintw(2, "%s", "9");
                 cwinch = true;
