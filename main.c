@@ -51,7 +51,7 @@ parent:
     sigwinch_initialize();
     initscr();
     getmaxyx(stdscr, cROWS, cCOLS);
-    timeout(-1);
+    timeout(1000);
     cstart_color();
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
     cinit_pair(2, COLOR_BLUE, COLOR_BLACK);
@@ -96,10 +96,19 @@ parent:
                 wrefresh(win1);
                 break;
             case KEY_UP:
-                cwinch = true;
+                raise(SIGWINCH);
+                //cwinch = true;
                 break;
-            default:
-                printw("%c", ch);
+            case ERR:
+                cwprintw(2, "%s", "9");
+                cwinch = true;
+                buffer.repaint();
+                break;
+            default:;
+                char str[2];
+                str[0] = ch;
+                str[1] = '\0';
+                cwprintw(3, "%s", str);
                 //refresh();
                 //ungetch(ch);
                 //buffer.repaint();
