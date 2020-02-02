@@ -10,26 +10,13 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "misc.h"
 #include "cncurses.h"
 
 int main(int argc, char** argv){
     //begin{initialization}}
-    int fd1[2];
-    int fd2[2];
-    int fd3[2];
-    int fd4[2];
-    if(pipe(fd1)){
-        panic("pipe1 failed", EXIT_FAILURE);
-    }
-    if(pipe(fd2)){
-        panic("pipe2 failed", EXIT_FAILURE);
-    }
-    if(pipe(fd3)){
-        panic("pipe3 failed", EXIT_FAILURE);
-    }
-    if(pipe(fd4)){
-        panic("pipe4 failed", EXIT_FAILURE);
+    int fd1[2], fd2[2], fd3[2], fd4[4];
+    if(pipe(fd1) || pipe(fd2) || pipe(fd3) || pipe(fd4)){
+        panic("failed to create pipes", EXIT_FAILURE);
     }
     for(int i=0; i<2; i++){
         int flags1 = fcntl(fd1[i], F_GETFL, 0);
@@ -51,6 +38,7 @@ int main(int argc, char** argv){
         panic("fork1 failed", EXIT_FAILURE);
     }
     else if(forkreturn1 == 0){
+        //close unused fds
         close(fd1[0]);
         close(fd2[1]);
         close(fd3[0]);
@@ -64,7 +52,7 @@ int main(int argc, char** argv){
         fclose(stdin);
         dup2(fd2[0], 0);
         printf("test\n");
-        execlp("gdb", "gdb", (char*)NULL);
+        execlp("gdb", "gdb", argv[1], (char*)NULL);
         return 0;
     }
     else{
@@ -85,7 +73,7 @@ int main(int argc, char** argv){
             fopen("/dev/null", "w");
             fclose(stdin);
             dup2(fd4[0], 0);
-            execlp("gdb", "gdb", (char*)NULL);
+            execlp("gdb", "gdb", argv[1], (char*)NULL);
             return 0;
         }
         else{
@@ -107,31 +95,40 @@ parent:;
     waitpid(forkreturn2, NULL, WNOHANG);
     sigwinch_initialize();
     initscr();
+    curs_set(0);
     getmaxyx(stdscr, cROWS, cCOLS);
-    timeout(10);
+    timeout(50);
     cstart_color();
+    //order matters; 1 means win1, 2 means win2, ...
     cinit_pair(1, COLOR_GREEN, COLOR_BLACK);
     cinit_pair(2, COLOR_BLUE, COLOR_BLACK);
     cinit_pair(3, COLOR_WHITE, COLOR_BLACK);
-    WINDOW* win1 = cnewwin(1,.5, 0, 0);
+    cinit_pair(4, COLOR_YELLOW, COLOR_BLACK);
+    //cnewwin is a macro; be careful with parenthesis
+    WINDOW* win1 = cnewwin((1-(2.0/cROWS)), .5, 0, 0);
     WINDOW* win2 = cnewwin(.5, .5, 0, .5);
     WINDOW* win3 = cnewwin(.5, .5, .5, .5);
-    cinit(3, win1, win2, win3);
+    WINDOW* win4 = cnewwin((1.0/cROWS), .5, (1-(2.0/cROWS)), 0);
+    //first arg to cinit is number of windows
+    cinit(4, win1, win2, win3, win4);
     cwattron(1, COLOR_PAIR(1));
     cwattron(2, COLOR_PAIR(2));
     cwattron(3, COLOR_PAIR(3));
+    cwattron(4, COLOR_PAIR(4));
     cbreak();
     keypad(stdscr, TRUE);
     noecho();
     clear();
     refresh();
+    cwprintw(4, "%s", "hi");
     cwinch = true;
     buffer.repaint();
     //end{initialization}
     //begin{body]
+{
     int ch;
     flushinp();
-    while((ch = getch()) != KEY_SHOME){
+    while((ch = getch()) != EXIT_KEY){
         switch(ch){
             case KEY_LEFT:
                 cgetyx(3);
@@ -165,7 +162,7 @@ parent:;
                 str[1] = '\0';
                 if(isascii(ch)){
                     cwprintw(1, "%s", str);
-                    fprintf(stdin_gdb1w, "%s", str);
+                    fprintf(stdin_gdb1w, "%c", ch);
                     if(ch == '\n'){
                         fflush(stdin_gdb1w);
                         cgetyx(1);
@@ -192,13 +189,21 @@ parent:;
             win3_buf[1] = '\0';
             cwprintw(3, "%s", win3_buf);
         }
+    
     }
+}
     //end{body}}
     //begin{termination}
     cwattroff(1, COLOR_PAIR(1));
     cwattroff(2, COLOR_PAIR(2));
     cwattroff(3, COLOR_PAIR(3));
+    cwattroff(4, COLOR_PAIR(4));
     endwin();
+    if(kill(forkreturn1, SIGTERM) || kill(forkreturn2, SIGTERM)){
+        kill(forkreturn1, SIGKILL);
+        kill(forkreturn2, SIGKILL);
+        panic("Could not SIGTERM children. SIGKILLed them", EXIT_FAILURE);
+    }
     return EXIT_SUCCESS;
     //end{termination}
 }

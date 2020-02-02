@@ -9,6 +9,8 @@
 #define BUFFER_COLS_MAX 20
 #define WINDOWS_MAX 5
 
+#define EXIT_KEY KEY_SHOME
+
 #define panic(mesg, exit_code) fprintf(stderr, "Fatal: "mesg", %s, %d", __FILE__, __LINE__); exit(exit_code)
 
 

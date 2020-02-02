@@ -40,85 +40,86 @@ void sigwinch_handler();
 void sigwinch_initialize();
 
 
-/* REQUIRES: valid command
+/* REQUIRES: valid win, command
  * MODIFIES: none
- * EFFECTS: pushes command into buffer queue
+ * EFFECTS: pushes command into back of queue for window win
  *
  * NOTES: command format- 999,...
- * first three digits are command code, followed by comma seperated args
+ * first three digits are opcode, followed by DELIM seperated args
  */
-void screen_buffer_push(char* command);
+void screen_buffer_push(int win, char* command);
 
 
-/* REQUIRES: dest pointer. buffer.size()>0
- * MODIFIES: overwrites dest with first line of buffer
- * EFFECTS: pops front off queue and returns. rows shifted down 1; 
+/* REQUIRES: valid win, dest pointer, buffer.size()>0
+ * MODIFIES: overwrites dest with last line of queue for window win
+ * EFFECTS: pops back off queue and returns. row-- 
  *
- * NOTES: not intended to be used directly
+ * NOTES: useful for deleting (think backspace)
  */
-char* screen_buffer_pop(char* dest);
+char* screen_buffer_pop(int win, char* dest);
 
 
-/* REQUIRES: none
+/* REQUIRES: valid win
  * MODIFIES: none
- * EFFECTS: returns size of buffer.
+ * EFFECTS: returns size of queue for window win
  *
  * NOTES:
  */
-size_t screen_buffer_size();
+size_t screen_buffer_size(int win);
 
 
-/* REQUIRES: none
+/* REQUIRES: valid win, idnex
  * MODIFIES: none
- * EFFECTS: returns pointer to row index
+ * EFFECTS: returns pointer to row index of queue for window win
  *
- * NOTES:
+ * NOTES: does basic sanity checks. panics upon error.
  */
-char* screen_buffer_at(size_t index);
+char* screen_buffer_at(int win, size_t index);
 
 
-/* REQUIRES: none
+/* REQUIRES: valid win
  * MODIFIES: none
  * EFFECTS: sets rows=0. Does not overwrite existing values in queue
  *
  * NOTES: a "quick format"
  */
-void screen_buffer_clear();
+void screen_buffer_clear(int win);
 
 
-/* REQUIRES: valid index
+/* REQUIRES: valid win, index
  * MODIFIES: none
  * EFFECTS: size--
  *
- * NOTES:
+ * NOTES: erases row index of queue for window win
  */
-void screen_buffer_erase(size_t index);
+void screen_buffer_erase(int win, size_t index);
 
 
-/* REQUIRES: none
+/* REQUIRES: valid win
  * MODIFIES: none
- * EFFECTS: repaints terminal as stored in global buffer.
+ * EFFECTS: repaints terminal as stored in queue for window win
  *
- * NOTES: no
+ * NOTES: repainting too frequently seems to cause screen flicker.
+ * Need to look into the root cause.
  */
-void screen_buffer_repaint();
+void screen_buffer_repaint(int win);
 
 
 // declare and initialize screen buffer
 typedef struct{
     //"public"
-    void (*push)(char*);
-    char* (*pop)(char*);
-    size_t (*size)();
-    char* (*at)(size_t);
-    void (*clear)();
-    void (*erase)(size_t);
-    void (*repaint)();
+    void (*push)(int, char*);
+    char* (*pop)(int, char*);
+    size_t (*size)(int);
+    char* (*at)(int, size_t);
+    void (*clear)(int);
+    void (*erase)(int, size_t);
+    void (*repaint)(int);
     //private
     char queue[BUFFER_ROWS_MAX][BUFFER_COLS_MAX];
     size_t rows;
 } screen_buffer;
-screen_buffer buffer;
+screen_buffer buffer[WINDOWS_MAX];
 
 
 void cinit(int num, ...);
@@ -128,7 +129,7 @@ void cwmove(int win, int y, int x);
 void cwmove_r(int win, int dy, int dx);
 void cwmove_p(int win, double py, double px);
 void cwrefresh(int win);
-void clearBuf();
+void cclear(int win);
 void cwprintw(int win, const char* fmt, ...);
 void cwvline(int win, char ch, int n);
 void cwhline(int win, char ch, int n);

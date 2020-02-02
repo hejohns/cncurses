@@ -15,17 +15,6 @@ double cwinparams[WINDOWS_MAX][4] = {{0}};
 int cwincolors[WINDOWS_MAX];
 bool cwinch = false;
 
-screen_buffer buffer={
-    .push=&screen_buffer_push,
-    .pop=&screen_buffer_pop,
-    .size=&screen_buffer_size,
-    .at=&screen_buffer_at,
-    .clear=&screen_buffer_clear,
-    .erase=&screen_buffer_erase,
-    .repaint=&screen_buffer_repaint,
-    .rows=(size_t)0
-};
-
 void cinit(int num, ...){
     if(num >= WINDOWS_MAX){
         panic("Number of cwindows must be less than WINDOWS MAX.", EXIT_FAILURE);
@@ -43,6 +32,18 @@ void cinit(int num, ...){
         cwinparams[i][3] /= cCOLS;
     }
     va_end(args);
+    for(int i=0; i<WINDOWS_MAX; i++){
+        screen_buffer buffer[i]=(screen_buffer){
+            .push=&screen_buffer_push,
+            .pop=&screen_buffer_pop,
+            .size=&screen_buffer_size,
+            .at=&screen_buffer_at,
+            .clear=&screen_buffer_clear,
+            .erase=&screen_buffer_erase,
+            .repaint=&screen_buffer_repaint,
+            .rows=(size_t)0
+        };
+    }
 }
 
 void sigwinch_initialize(){
@@ -61,49 +62,49 @@ void sigwinch_handler(){
     cwinch = true;
 }
 
-void screen_buffer_push(char* command){
-    if(buffer.size() >= BUFFER_ROWS_MAX){
+void screen_buffer_push(int win, char* command){
+    if(buffer[win].size(win) >= BUFFER_ROWS_MAX){
         panic("buffer is full", EXIT_FAILURE);
     }
     if(strlen(command) >= BUFFER_COLS_MAX){
         panic("command too long", EXIT_FAILURE);
     }
-    strcpy(buffer.queue[buffer.size()], command);
-    buffer.rows++;
+    strcpy(buffer[win].queue[buffer[win].size(win)], command);
+    buffer[win].rows++;
 }
 
-char* screen_buffer_pop(char* dest){
-    if(buffer.size()==0){
-        panic("buffer is empty; nothing to pop", EXIT_FAILURE);
+char* screen_buffer_pop(int win, char* dest){
+    if(buffer[win].size()==0){
+        panic("buffer is empty-- nothing to pop", EXIT_FAILURE);
     }
-    dest=strcpy(dest, buffer.at(buffer.size()-1));
-    buffer.rows--;
+    dest=strcpy(dest, buffer[win].at(win, buffer[win].size(win)-1));
+    buffer[win].rows--;
     return dest;
 }
 
-size_t screen_buffer_size(){
-    return buffer.rows;
+size_t screen_buffer_size(int win){
+    return buffer[win].rows;
 }
 
-char* screen_buffer_at(size_t index){
-    if(index >= buffer.size()){
+char* screen_buffer_at(int win, size_t index){
+    if(index >= buffer[win].size(win)){
         panic("index out of range", EXIT_FAILURE);
     }
-    return buffer.queue[index];
+    return buffer[win].queue[index];
 }
 
-void screen_buffer_clear(){
-    buffer.rows=0;
+void screen_buffer_clear(int win){
+    buffer[win].rows=0;
 }
 
-void screen_buffer_erase(size_t index){
-    if(index >= buffer.size()){
+void screen_buffer_erase(int win, size_t index){
+    if(index >= buffer[win].size(win)){
         panic("index out of range", EXIT_FAILURE);
     }
-    for(size_t i=index+1; i<buffer.size(); i++){
-        strcpy(buffer.at(i-1), buffer.at(i));
+    for(size_t i=index+1; i<buffer[win].size(win); i++){
+        strcpy(buffer[win].at(win, i-1), buffer[win].at(win, i));
     }
-    buffer.rows--;
+    buffer[win].rows--;
 }
 
 int opcode(char* row){
@@ -116,7 +117,7 @@ void cgetyx(int win){
     }
     char str1[BUFFER_COLS_MAX];
     snprintf(str1, 6, "001"DELIM"%d", win);
-    buffer.push(str1);
+    buffer[0].push(0, str1);
 }
 
 void cwmove(int win, int y, int x){
@@ -131,7 +132,7 @@ void cwmove(int win, int y, int x){
     }
     char str1[BUFFER_COLS_MAX];
     sprintf(str1, "002"DELIM"%d"DELIM"%d"DELIM"%d", win, y, x);
-    buffer.push(str1);
+    buffer[0].push(0, str1);
 }
 
 void cwmove_r(int win, int dy, int dx){
@@ -140,7 +141,7 @@ void cwmove_r(int win, int dy, int dx){
     }
     char str1[BUFFER_COLS_MAX];
     sprintf(str1, "003"DELIM"%d"DELIM"%d"DELIM"%d", win, dy, dx);
-    buffer.push(str1);
+    buffer[0].push(0, str1);
 }
 
 void cwmove_p(int win, double py, double px){
@@ -149,7 +150,7 @@ void cwmove_p(int win, double py, double px){
     }
     char str1[BUFFER_COLS_MAX];
     sprintf(str1, "004"DELIM"%d"DELIM"%f"DELIM"%f", win, py, px);
-    buffer.push(str1);
+    buffer[0].push(0, str1);
 }
 
 void cwrefresh(int win){
@@ -159,11 +160,11 @@ void cwrefresh(int win){
     wrefresh(cwindows[win]);
     char str1[BUFFER_COLS_MAX];
     snprintf(str1, 6, "005"DELIM"%d", win);
-    buffer.push(str1);
+    buffer[0].push(0, str1);
 }
 
-void clearBuf(){
-    (buffer.clear)();
+void cclear(int win){
+    (buffer[win].clear)(win);
 }
 
 void cwprintw(int win, const char* fmt, ...){
@@ -177,7 +178,7 @@ void cwprintw(int win, const char* fmt, ...){
         }
     }
     if(numArgs == 0){
-        panic("cprintw needs more than just fmt argument. Use %%s.", EXIT_FAILURE);
+        panic("cwprintw needs more than just fmt argument. Use %%s.", EXIT_FAILURE);
     }
     va_list args;
     va_start(args, fmt);
@@ -191,26 +192,26 @@ void cwprintw(int win, const char* fmt, ...){
                     if(containsDelim(arg_str)){
                         for(int i=0; i<strlen(arg_str); i++){
                             if(arg_str[i] == dummy[0]){
-                                buffer.push("000");
+                                buffer[win].push(win, "000");
                             }
                             else{
                                 snprintf(str1, 8, "011"DELIM"%d"DELIM"%c", win, arg_str[i]);
-                                buffer.push(str1);
+                                buffer[win].push(win, str1);
                             }
                         }
                     }
                     else{
                         sprintf(str1, "011"DELIM"%d"DELIM"%s", win, arg_str); 
-                        buffer.push(str1);
+                        buffer[win].push(win, str1);
                     }
                     break;
                 case 'd':;
                     sprintf(str1, "012"DELIM"%d"DELIM"%d", win, va_arg(args, int));
-                    buffer.push(str1);
+                    buffer[win].push(win, str1);
                     break;
                 case 'f':;
                     sprintf(str1, "013"DELIM"%d"DELIM"%f", win, va_arg(args, double));
-                    buffer.push(str1);
+                    buffer[win].push(win, str1);
                     break;
                 default:
                     panic("Can only take %%s, %%d, %%f", EXIT_FAILURE);
@@ -233,16 +234,16 @@ void cwprintw(int win, const char* fmt, ...){
 void cwvline(int win, char ch, int n){
     char str1[BUFFER_COLS_MAX];
     sprintf(str1, "021"DELIM"%d"DELIM"%c"DELIM"%d", win, ch, n);
-    buffer.push(str1);
+    buffer[win].push(win, str1);
 }
 
 void cwhline(int win, char ch, int n){
     char str1[BUFFER_COLS_MAX];
     sprintf(str1, "022"DELIM"%d"DELIM"%c"DELIM"%d", win, ch, n);
-    buffer.push(str1);
+    buffer[win].push(win, str1);
 }
 
-void screen_buffer_repaint(){
+void screen_buffer_repaint(int win){
     if(cwinch){
         cwinch = false;
         for(int i=WINDOWS_MAX-1; i>=0; i--){
@@ -265,14 +266,14 @@ void screen_buffer_repaint(){
             cwindows[i] = newwin((int)(cwinparams[i][0]*cROWS), (int)(cwinparams[i][1]*cCOLS), (int)(cwinparams[i][2]*cROWS), (int)(cwinparams[i][3]*cCOLS));
             wattron(cwindows[i], cwincolors[i]);
         }
-        if(buffer.size()==0){
+        if(buffer[win].size(win)==0){
             return;
         }
-        if(buffer.size()>=BUFFER_ROWS_MAX){
+        if(buffer[win].size(win)>=BUFFER_ROWS_MAX){
             panic("buffer corrupted", EXIT_FAILURE);
         }
-        for(size_t i=0; i<buffer.size(); i++){
-            int cfunc = opcode(buffer.at(i));
+        for(size_t i=0; i<buffer[win].size(win); i++){
+            int cfunc = opcode(buffer[win].at(win, i));
             switch(cfunc){
             case 0:
                 //print delimeter
@@ -282,20 +283,20 @@ void screen_buffer_repaint(){
                 // getyx
                 // args: WINDOW* 
                 {
-                    char* preserve = strdup(buffer.at(i));
-                    char* token = strtok(buffer.at(i), DELIM);
+                    char* preserve = strdup(buffer[win].at(win, i));
+                    char* token = strtok(buffer[win].at(win, i), DELIM);
                     token = strtok(NULL, DELIM);
                     int win = atoi(token);
                     getyx(cwindows[win], Y[win], X[win]);
-                    strcpy(buffer.at(i), preserve);
+                    strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 2:;
                 // wmove
                 // args: win, y,x
                 {
-                char* preserve = strdup(buffer.at(i));
-                char* token = strtok(buffer.at(i), DELIM);
+                char* preserve = strdup(buffer[win].at(win, i));
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
@@ -303,15 +304,15 @@ void screen_buffer_repaint(){
                 token = strtok(NULL, DELIM);
                 int x = atoi(token);
                 wmove(cwindows[win], y, x);
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 3:;
                 // wmove_r 
                 // args: win, dy,dx
                 {
-                char* preserve = strdup(buffer.at(i));
-                char* token = strtok(buffer.at(i), DELIM);
+                char* preserve = strdup(buffer[win].at(win, i));
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
@@ -325,15 +326,15 @@ void screen_buffer_repaint(){
                     panic("dx out of bounds", EXIT_FAILURE);
                 }
                 wmove(cwindows[win], Y[win]+dy, X[win]+dx);
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 4:;
                 // wmove_p
                 // args: win, percenty,percentx
                 {
-                char* preserve = strdup(buffer.at(i));
-                char* token = strtok(buffer.at(i), DELIM);
+                char* preserve = strdup(buffer[win].at(win, i));
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
@@ -347,19 +348,19 @@ void screen_buffer_repaint(){
                     panic("dx out of bounds", EXIT_FAILURE);
                 }
                 wmove(cwindows[win], (int)cROWS*py, (int)cCOLS*px);
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 5:;
                 //wrefresh
                 //args: win
                 {
-                char* preserve = strdup(buffer.at(i));
-                char* token = strtok(buffer.at(i), DELIM);
+                char* preserve = strdup(buffer[win].at(win, i));
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 wrefresh(cwindows[win]);
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 6:
@@ -377,16 +378,16 @@ void screen_buffer_repaint(){
                 // args: win, str
                 {
                 //strtok destroys original. Must preserve copy.
-                char* preserve = strdup(buffer.at(i));
+                char* preserve = strdup(buffer[win].at(win, i));
                 //first token is opcode- throw away
-                char* token = strtok(buffer.at(i), DELIM);
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
                 char* str = strdup(token);
                 wprintw(cwindows[win], "%s", str);
                 //restore copy
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 12:;
@@ -394,16 +395,16 @@ void screen_buffer_repaint(){
                 // args: win, dec
                 {
                 //strtok destroys original. Must preserve copy.
-                char* preserve = strdup(buffer.at(i));
+                char* preserve = strdup(buffer[win].at(win, i));
                 //first token is opcode- throw away
-                char* token = strtok(buffer.at(i), DELIM);
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
                 int dec = atoi(token);
                 wprintw(cwindows[win], "%d", dec);
                 //restore copy
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 13:;
@@ -411,16 +412,16 @@ void screen_buffer_repaint(){
                 // args: win, flt
                 {
                 //strtok destroys original. Must preserve copy.
-                char* preserve = strdup(buffer.at(i));
+                char* preserve = strdup(buffer[win].at(win, i));
                 //first token is opcode- throw away
-                char* token = strtok(buffer.at(i), DELIM);
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
                 double flt = atof(token);
                 wprintw(cwindows[win], "%f", flt);
                 //restore copy
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 14:
@@ -441,8 +442,8 @@ void screen_buffer_repaint(){
                 // wvline
                 // args: ch, n
                 {
-                char* preserve = strdup(buffer.at(i));
-                char* token = strtok(buffer.at(i), DELIM);
+                char* preserve = strdup(buffer[win].at(win, i));
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
@@ -450,15 +451,15 @@ void screen_buffer_repaint(){
                 token = strtok(NULL, DELIM);
                 int n = atoi(token);
                 wvline(cwindows[win], ch, n);
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 22:;
                 // whline
                 // args: ch, n
                 {
-                char* preserve = strdup(buffer.at(i));
-                char* token = strtok(buffer.at(i), DELIM);
+                char* preserve = strdup(buffer[win].at(win, i));
+                char* token = strtok(buffer[win].at(win, i), DELIM);
                 token = strtok(NULL, DELIM);
                 int win = atoi(token);
                 token = strtok(NULL, DELIM);
@@ -466,7 +467,7 @@ void screen_buffer_repaint(){
                 token = strtok(NULL, DELIM);
                 int n = atoi(token);
                 whline(cwindows[win], ch, n);
-                strcpy(buffer.at(i), preserve);
+                strcpy(buffer[win].at(win, i), preserve);
                 }
                 break;
             case 23:
@@ -503,128 +504,6 @@ void screen_buffer_repaint(){
                 break;
             case 39:
                 break;
-            case 40:
-                break;
-            case 41:
-                break;
-            case 42:
-                break;
-            case 43:
-                break;
-            case 44:
-                break;
-            case 45:
-                break;
-            case 46:
-                break;
-            case 47:
-                break;
-            case 48:
-                break;
-            case 49:
-                break;
-            case 50:
-                break;
-            case 51:
-                break;
-            case 52:
-                break;
-            case 53:
-                break;
-            case 54:
-                break;
-            case 55:
-                break;
-            case 56:
-                break;
-            case 57:
-                break;
-            case 58:
-                break;
-            case 59:
-                break;
-            case 60:
-                break;
-            case 61:
-                break;
-            case 62:
-                break;
-            case 63:
-                break;
-            case 64:
-                break;
-            case 65:
-                break;
-            case 66:
-                break;
-            case 67:
-                break;
-            case 68:
-                break;
-            case 69:
-                break;
-            case 70:
-                break;
-            case 71:
-                break;
-            case 72:
-                break;
-            case 73:
-                break;
-            case 74:
-                break;
-            case 75:
-                break;
-            case 76:
-                break;
-            case 77:
-                break;
-            case 78:
-                break;
-            case 79:
-                break;
-            case 80:
-                break;
-            case 81:
-                break;
-            case 82:
-                break;
-            case 83:
-                break;
-            case 84:
-                break;
-            case 85:
-                break;
-            case 86:
-                break;
-            case 87:
-                break;
-            case 88:
-                break;
-            case 89:
-                break;
-            case 90:
-                break;
-            case 91:
-                break;
-            case 92:
-                break;
-            case 93:
-                break;
-            case 94:
-                break;
-            case 95:
-                break;
-            case 96:
-                break;
-            case 97:
-                break;
-            case 98:
-                break;
-            case 99:
-                break;
-            case 100:
-                break;
             default:
                 panic("opcode invalid", EXIT_FAILURE);
                 break;
@@ -638,6 +517,7 @@ void screen_buffer_repaint(){
         }
     }
     else{
-        //do nothing
+        //do nothing- screen tends to flicker when repainted too often.
+        //Don't know why yet. Increasing timeout seems to help
     }
 }
