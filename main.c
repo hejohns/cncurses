@@ -122,7 +122,7 @@ parent:;
     refresh();
     cwprintw(4, "%s", "hi");
     cwinch = true;
-    buffer.repaint();
+    buffer[0].repaint(0);
     //end{initialization}
     //begin{body]
 {
@@ -150,11 +150,21 @@ parent:;
                 break;
             case KEY_BACKSPACE:;
                 char nil[BUFFER_COLS_MAX];
-                buffer.pop(nil);
+                buffer[1].pop(1, nil);
+                fprintf(stdin_gdb1w, "%c", '\b');
+                fflush(stdin_gdb1w);
                 break;
             case ERR:
                 cwinch = true;
-                buffer.repaint();
+                buffer[0].repaint(0);
+                cwinch = true;
+                buffer[1].repaint(1);
+                cwinch = true;
+                buffer[2].repaint(2);
+                cwinch = true;
+                buffer[3].repaint(3);
+                cwinch = true;
+                buffer[4].repaint(4);
                 break;
             default:;
                 char str[2];
@@ -166,7 +176,7 @@ parent:;
                     if(ch == '\n'){
                         fflush(stdin_gdb1w);
                         cgetyx(1);
-                        cwmove(1, Y[1], X[1]);
+                        //cwmove(1, Y[1], X[1]);
                     }
                     else{
                     }
