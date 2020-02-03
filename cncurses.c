@@ -149,7 +149,7 @@ void cwmove_p(int win, double py, double px){
         panic("win out of range", EXIT_FAILURE);
     }
     char str1[BUFFER_COLS_MAX];
-    sprintf(str1, "004"DELIM"%d"DELIM"%f"DELIM"%f", win, py, px);
+    snprintf(str1, BUFFER_COLS_MAX-1, "004"DELIM"%d"DELIM"%.4g"DELIM"%.4g", win, py, px);
     buffer[0].push(0, str1);
 }
 

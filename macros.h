@@ -6,7 +6,7 @@
 
 #define DELIM "^"
 #define BUFFER_ROWS_MAX 8000
-#define BUFFER_COLS_MAX 20
+#define BUFFER_COLS_MAX 40
 #define WINDOWS_MAX 5
 
 #define EXIT_KEY KEY_SHOME
