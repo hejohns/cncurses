@@ -44,7 +44,6 @@ int main(int argc, char** argv){
         panic("fork1 failed", EXIT_FAILURE);
     }
     else if(forkreturn1 == 0){
-<<<<<<< HEAD
         //bt full
         //close unused fds
         close(fd1[0]);
@@ -61,9 +60,6 @@ int main(int argc, char** argv){
         dup2(fd2[0], 0);
         printf("test\n");
         execlp("gdb", "gdb", argv[1], (char*)NULL);
-=======
-        execlp("gdb", "gdb", (char*)NULL);
->>>>>>> didnt realize i was on master
         return 0;
     }
     else{
@@ -71,7 +67,6 @@ int main(int argc, char** argv){
             panic("fork2 failed", EXIT_FAILURE);
         }
         else if(forkreturn2 == 0){
-<<<<<<< HEAD
             //info b
             //close unused fds
             close(fd1[0]);
@@ -87,9 +82,6 @@ int main(int argc, char** argv){
             fclose(stdin);
             dup2(fd4[0], 0);
             execlp("gdb", "gdb", argv[1], (char*)NULL);
-=======
-            execlp("gdb", "gdb", (char*)NULL);
->>>>>>> didnt realize i was on master
             return 0;
         }
         else{
@@ -137,7 +129,6 @@ parent:;
     refresh();
     //end{initialization}
     //begin{body]
-<<<<<<< HEAD
     box(win1.ptr, 0, 0);
     box(win2.ptr, 0, 0);
     box(win3.ptr, 0, 0);
@@ -169,25 +160,6 @@ parent:;
     wrefresh(win4.ptr);
     }
 }
-=======
-    //cvline('|', 20);
-    //cmove_p(.50,.50);
-    //cgetyx();
-    //c000(1);
-    //cprintw("%s", "Hello");
-    //cmove_r(1, 0);
-    //cprintw("%s", "cruel");
-    //cmove_r(2, 0);
-    //cprintw("%s", "world");
-    //cmove_r(3, 0);
-    //cprintw("%d-%d,", 10, 20);
-    //cprintw("%f-%f", .100, .200);
-    //crefresh();
-    refresh();
-    echo();
-    //cclear();
-    while(true){}
->>>>>>> didnt realize i was on master
     //end{body}}
     //begin{termination}
     cwattroff(win1, COLOR_PAIR(1));
