@@ -52,3 +52,28 @@ void sigwinch_initialize(){
 	panic("Failed to set SIGWINCH handler", EXIT_FAILURE);
     }
 }
+
+void cresizeterm(int num, ...){
+    if(cwinch){
+        endwin();
+        refresh();
+        getmaxyx(stdscr, cROWS, cCOLS);
+        resizeterm(cROWS, cCOLS);
+        va_list args;
+        va_start(args, num);
+        for(int i=0; i<num; i++){
+            screen_buffer* arg = va_arg(args, screen_buffer*);
+            wclear(arg->ptr);
+            cwattroff((*arg), COLOR_PAIR(i+1));
+            delwin(arg->ptr);
+            arg->ptr = newwin((int)(arg->dim[0]*cROWS), (int)(arg->dim[1]*cCOLS), (int)(arg->dim[2]*cROWS), (int)(arg->dim[3]*cCOLS));
+            cwattron((*arg), COLOR_PAIR(i+1));
+            wrefresh(arg->ptr);
+        }
+        va_end(args);
+        cwinch = false;
+    }
+    else{
+        //do nothing
+    }
+}

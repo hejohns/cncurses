@@ -53,5 +53,8 @@ void sigwinch_handler();
 void sigwinch_initialize();
 
 void cinit(int num, ...);
-// ncurses wrapper functions
+//ncurses wrapper functions
+
+void cresizeterm(int num, ...);
+
 #endif /* CNCURSES_H */
