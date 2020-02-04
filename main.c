@@ -127,18 +127,30 @@ parent:;
     cwattron(win4, COLOR_PAIR(4));
     clear();
     refresh();
+    fprintf(stdin_gdb1w, "h\n");
+    fflush(stdin_gdb1w);
     //end{initialization}
     //begin{body]
-    box(win1.ptr, 0, 0);
-    box(win2.ptr, 0, 0);
-    box(win3.ptr, 0, 0);
-    box(win4.ptr, 0, 0);
 {
     int ch;
     flushinp();
     while((ch = getch()) != EXIT_KEY){
         switch(ch){
+            case REFRESH_KEY:;
+                endwin();
+                system("reset");
+                break;
             case KEY_LEFT:;
+                char tmp[80];
+                char tmp2[90];
+                for(int i=0; i<153; i++){
+                    fgets(tmp, 80, stdout_gdb2r);
+                    sprintf(tmp2, "011"DELIM"%s", tmp);
+                    call2(win1, push, tmp2);
+                    call2(win2, push, tmp2);
+                    call2(win3, push, tmp2);
+                    call2(win4, push, tmp2);
+                }
                 break;
             case KEY_UP:;
                 break;
@@ -154,10 +166,11 @@ parent:;
                 //alphanumerics
                 break;
         }
-    wrefresh(win1.ptr);
-    wrefresh(win2.ptr);
-    wrefresh(win3.ptr);
-    wrefresh(win4.ptr);
+    cresizeterm(4, &win1, &win2, &win3, &win4);
+    call(win1, repaint);
+    call(win2, repaint);
+    call(win3, repaint);
+    call(win4, repaint);
     }
 }
     //end{body}}
