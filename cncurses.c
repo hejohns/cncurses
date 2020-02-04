@@ -24,7 +24,7 @@ void cinit(int num, ...){
         arg->pop = &screen_buffer_pop;
         arg->size = &screen_buffer_size;
         arg->at = &screen_buffer_at;
-        arg->clear = &screen_buffer_clear;
+        arg->cclear = &screen_buffer_clear;
         arg->erase = &screen_buffer_erase;
         arg->repaint = &screen_buffer_repaint;
         arg->dim[0] /= cROWS;
@@ -53,6 +53,8 @@ void sigwinch_initialize(){
     }
 }
 
+//ncurses wrappers
+
 void cresizeterm(int num, ...){
     if(cwinch){
         endwin();
@@ -76,4 +78,7 @@ void cresizeterm(int num, ...){
     else{
         //do nothing
     }
+}
+
+void cwprintw(screen_buffer* win, char* str){
 }

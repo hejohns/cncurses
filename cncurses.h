@@ -14,7 +14,8 @@ typedef struct screen_buffer{
     char* (*pop)(struct screen_buffer*, char*);
     size_t (*size)(struct screen_buffer*);
     char* (*at)(struct screen_buffer*, size_t);
-    void (*clear)(struct screen_buffer*);
+    //named cclear because clear is expanded as a ncurses macro
+    void (*cclear)(struct screen_buffer*);
     void (*erase)(struct screen_buffer*, size_t);
     void (*repaint)(struct screen_buffer*);
     WINDOW* ptr;
@@ -53,8 +54,11 @@ void sigwinch_handler();
 void sigwinch_initialize();
 
 void cinit(int num, ...);
+
 //ncurses wrapper functions
 
 void cresizeterm(int num, ...);
+
+void cwprintw(screen_buffer* win, char* str);
 
 #endif /* CNCURSES_H */
