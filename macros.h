@@ -2,21 +2,24 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#define str(...) #__VA_ARGS__
-
+#define HAS_COLOR 1
 #define DELIM "^"
 #define BUFFER_ROWS_MAX 8000
 #define BUFFER_COLS_MAX 40
-#define WINDOWS_MAX 5
-
 #define EXIT_KEY KEY_SHOME
+
+#define str(...) #__VA_ARGS__
+
+//used to call function pointers in structs (passes struct pointer automatically)
+#define call(name, function) (name).function(&(name))
+#define call2(name, function, ...) (name).function(&(name), __VA_ARGS__)
+
 
 #define panic(mesg, exit_code) fprintf(stderr, "Fatal: "mesg", %s, %d", __FILE__, __LINE__); exit(exit_code)
 
+#define cnewwin(y, x, sy, sx) newwin(y*cROWS, x*cCOLS, sy*cROWS, sx*cCOLS)
 
-#define cnewwin(a, b, c, d) newwin(a*cROWS, b*cCOLS, c*cROWS, d*cCOLS)
 
-#define HAS_COLOR 1
 #ifdef HAS_COLOR
 
 #define cstart_color() if(has_colors())\
@@ -25,13 +28,17 @@
 #define cinit_pair(...) if(has_colors())\
     init_pair(__VA_ARGS__)
 
-#define cwattron(x, y) if(has_colors())\
-    wattron(cwindows[x], y);\
-    cwincolors[x] = y
+#define cwattron(win, pair) if(has_colors())\
+    wattron(win.ptr,  pair);\
 
-#define cwattroff(x, y) if(has_colors())\
-    wattroff(cwindows[x], y)
+#define cwattroff(win, pair) if(has_colors())\
+    wattroff(win.ptr, pair)
+
+#elif
+
+#define cstart_color() ;
 
 #endif
+
 
 #endif /* MACROS_H */
