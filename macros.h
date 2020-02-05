@@ -7,7 +7,7 @@
 #define BUFFER_ROWS_MAX 8000
 #define BUFFER_COLS_MAX 100
 #define EXIT_KEY KEY_SHOME
-#define REFRESH_KEY KEY_SEND
+#define RESET_KEY KEY_SEND
 
 #define str(...) #__VA_ARGS__
 

@@ -128,15 +128,36 @@ parent:;
     clear();
     refresh();
     fprintf(stdin_gdb1w, "h\n");
+    clearok(win1.ptr, true);
+    clearok(win2.ptr, true);
+    clearok(win3.ptr, true);
+    clearok(win4.ptr, true);
+    immedok(win1.ptr, true);
+    immedok(win2.ptr, true);
+    immedok(win3.ptr, true);
+    immedok(win4.ptr, true);
+    scrollok(win1.ptr, true);
+    scrollok(win2.ptr, true);
+    scrollok(win3.ptr, true);
+    scrollok(win4.ptr, true);
     fflush(stdin_gdb1w);
     //end{initialization}
     //begin{body]
 {
+    //as with any tmp reg, do not assume regs will be untouched if code is not directly sequential
+    size_t reg0Size = BUFFER_COLS_MAX/2;
+    char* reg0 = malloc(reg0Size);
+    size_t reg1Size = BUFFER_COLS_MAX/2;
+    char* reg1 = malloc(reg1Size);
     int ch;
     flushinp();
     while((ch = getch()) != EXIT_KEY){
+        //for testing. Will replace screen_buffer queue with less crude implementation
+        if(reg0Size > BUFFER_COLS_MAX || reg1Size > BUFFER_COLS_MAX){
+            panic("REG CHECK", EXIT_FAILURE);
+        }
         switch(ch){
-            case REFRESH_KEY:;
+            case RESET_KEY:;
                 endwin();
                 system("reset");
                 break;
@@ -153,6 +174,20 @@ parent:;
                 }
                 break;
             case KEY_UP:;
+                //get breakpoints
+                fprintf(stdin_gdb2w, "info b\n");
+                fflush(stdin_gdb2w);
+                call(win3, cclear);
+                if(getline(&reg1, &reg1Size, stdout_gdb2r) != EOF)
+                {
+                    strcpy(reg0, reg1);
+                    for(; getline(&reg1, &reg1Size, stdout_gdb2r) != EOF && reg1[0] != '('; ){
+                        strcat(reg0, reg1);
+                    }
+                    snprintf(reg1, reg1Size, "011"DELIM"%s", reg0);
+                    call2(win3, push, reg1);
+                }
+                //cwprintw(win3, );
                 break;
             case KEY_RIGHT:;
                 break;
@@ -172,6 +207,8 @@ parent:;
     call(win3, repaint);
     call(win4, repaint);
     }
+    free(reg0);
+    free(reg1);
 }
     //end{body}}
     //begin{termination}
