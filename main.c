@@ -128,6 +128,18 @@ parent:;
     clear();
     refresh();
     fprintf(stdin_gdb1w, "h\n");
+    clearok(win1.ptr, true);
+    clearok(win2.ptr, true);
+    clearok(win3.ptr, true);
+    clearok(win4.ptr, true);
+    immedok(win1.ptr, true);
+    immedok(win2.ptr, true);
+    immedok(win3.ptr, true);
+    immedok(win4.ptr, true);
+    scrollok(win1.ptr, true);
+    scrollok(win2.ptr, true);
+    scrollok(win3.ptr, true);
+    scrollok(win4.ptr, true);
     fflush(stdin_gdb1w);
     //end{initialization}
     //begin{body]
