@@ -4,19 +4,19 @@
 
 #define HAS_COLOR 1
 #define DELIM "^"
-#define BUFFER_ROWS_MAX 8000
-#define BUFFER_COLS_MAX 100
+#define SCREEN_BUFFER__ROWS_MAX 8000
+#define SCREEN_BUFFER_COLS_MAX 100
+#define SCREEN_BUFFER_QUEUE_INITIAL SCREEN_BUFFER_ROWS_MAX*SCREEN_BUFFER_COLS_MAX/2
 #define EXIT_KEY KEY_SHOME
 #define RESET_KEY KEY_SEND
 
-#define str(...) #__VA_ARGS__
-
-//used to call function pointers in structs (passes struct pointer automatically)
-#define call(name, function) (name).function(&(name))
-#define call2(name, function, ...) (name).function(&(name), __VA_ARGS__)
+//used to call function pointers in structs (passes name arg into function automatically)
+#define call(name, function) (name)->function(name)
+#define call2(name, function, ...) (name)->function(name, __VA_ARGS__)
 
 
-#define panic(mesg, exit_code) fprintf(stderr, "Fatal: "mesg", %s, %d", __FILE__, __LINE__); exit(exit_code)
+#define panic(mesg, exit_code) fprintf(stderr, "fatal: "mesg", %s, %d", __FILE__, __LINE__); exit(exit_code)
+#define panic2(mesg, exit_code) fprintf(stderr, "fatal: "mesg", %s, %s, %d", __FILE__, __PRETTY_FUNCTION__, __LINE__); exit(exit_code)
 
 #define cnewwin(y, x, sy, sx) newwin(y*cROWS, x*cCOLS, sy*cROWS, sx*cCOLS)
 

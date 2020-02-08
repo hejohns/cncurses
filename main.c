@@ -1,16 +1,18 @@
 //main.c
+#include "macros.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include <signal.h>
 #include <curses.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "macros.h"
 #include "cncurses.h"
+
+
+screen_buffer win1, win2, win3, win4;
+
 
 int main(int argc, char** argv){
     //check args for proper usage
@@ -44,7 +46,7 @@ int main(int argc, char** argv){
         panic("fork1 failed", EXIT_FAILURE);
     }
     else if(forkreturn1 == 0){
-        //bt full
+        //bt
         //close unused fds
         close(fd1[0]);
         close(fd2[1]);
@@ -167,17 +169,17 @@ parent:;
                 for(int i=0; i<153; i++){
                     fgets(tmp, 80, stdout_gdb2r);
                     sprintf(tmp2, "011"DELIM"%s", tmp);
-                    call2(win1, push, tmp2);
-                    call2(win2, push, tmp2);
-                    call2(win3, push, tmp2);
-                    call2(win4, push, tmp2);
+                    call2(&win1, push, tmp2);
+                    call2(&win2, push, tmp2);
+                    call2(&win3, push, tmp2);
+                    call2(&win4, push, tmp2);
                 }
                 break;
             case KEY_UP:;
                 //get breakpoints
                 fprintf(stdin_gdb2w, "info b\n");
                 fflush(stdin_gdb2w);
-                call(win3, cclear);
+                call(&win3, cclear);
                 if(getline(&reg1, &reg1Size, stdout_gdb2r) != EOF)
                 {
                     strcpy(reg0, reg1);
@@ -185,7 +187,7 @@ parent:;
                         strcat(reg0, reg1);
                     }
                     snprintf(reg1, reg1Size, "011"DELIM"%s", reg0);
-                    call2(win3, push, reg1);
+                    call2(&win3, push, reg1);
                 }
                 //cwprintw(win3, );
                 break;
@@ -202,10 +204,10 @@ parent:;
                 break;
         }
     cresizeterm(4, &win1, &win2, &win3, &win4);
-    call(win1, repaint);
-    call(win2, repaint);
-    call(win3, repaint);
-    call(win4, repaint);
+    call(&win1, repaint);
+    call(&win2, repaint);
+    call(&win3, repaint);
+    call(&win4, repaint);
     }
     free(reg0);
     free(reg1);

@@ -9,14 +9,27 @@
 #include "screen_buffer.h"
 
 
+static const char EOR = -10;
+
 void screen_buffer_push(screen_buffer* win, char* cmd){
-    if(screen_buffer_size(win) >= BUFFER_ROWS_MAX){
-        panic("buffer is full", EXIT_FAILURE);
+    char* nextAvail = screen_buffer_at(win, screen_buffer_size(win)-1);
+    while(true){
+        if(nextAvail == '\0')
+            nextAvail++, break;
+        nextAvail++;
     }
-    if(strlen(cmd) >= BUFFER_COLS_MAX){
-        panic("command too long", EXIT_FAILURE);
+    if((nextAvail-win->queue)+strlen(cmd) > win->queue_size/1.5){
+        char* tmp = realloc(win->queue, (win->queue_size + strlen(cmd))*2);
+        if(tmp == NULL){
+            fprintf(stderr, "warning: realloc failed. Attemping to continue,"\
+                "%s, %s, %d", __FILE__, __PRETTY_FUNCTION__, __LINE__);
+        }
+        else{
+            nextAvail = tmp;
+            win->queue_size = win->queue_size + strlen(cmd);
+        }
     }
-    strcpy(win->queue[win->rows], cmd);
+    strcpy(nextAvail, cmd);
     win->rows++;
 }
 
@@ -30,17 +43,47 @@ char* screen_buffer_pop(screen_buffer* win, char* dest){
 }
 
 size_t screen_buffer_size(screen_buffer* win){
-    if(win->rows >= BUFFER_ROWS_MAX){
-        panic("buffer corrupted", EXIT_FAILURE);
-    }
+    if(win->rows >= BUFFER_ROWS_MAX)
+        panic2("buffer corrupted", EXIT_FAILURE);
     return win->rows;
 }
 
-char* screen_buffer_at(screen_buffer* win, size_t index){
-    if(index >= screen_buffer_size(win)){
-        panic("index out of range", EXIT_FAILURE);
+char* screen_buffer_at(screen_buffer* win, int index){
+    /* Since .at is oft called sequentially (when repainting), 
+     * store lastPos to reduce recalculation.
+     *
+     * lastWin, lastIndex, used  as sanity check to verify .at
+     * is being used properly.
+     */
+    static screen_buffer* lastWin;
+    static size_t lastIndex;
+    static char* lastPos;
+    if(index >= screen_buffer_size(win))
+        panic2("index out of range", EXIT_FAILURE);
+    char* ret = NULL;
+    if(index == -1){
+        if(lastWin!=win || lastIndex!=index-1)
+            panic2("incorrect usage of index=-1", EXIT_FAILURE);
+        for(char* i=lastPos; ; i++){
+            if(*i == EOR)
+                ret = i+1, break;
+        }
     }
-    return win->queue[index];
+    else{
+        int counter = 0;
+        for(char* i=win->queue; ; i++){
+            if(i == EOR)
+                counter++;
+            if(counter==index-1 && index>=0)
+                ret = i+1;
+        }
+    }
+    if(ret == NULL)
+        panic2("next index could not be found", EXIT_FAILURE);
+    lastWin = win;
+    lastIndex = index;
+    lastPos = ret;
+    return ret;
 }
 
 void screen_buffer_clear(screen_buffer* win){
@@ -212,4 +255,6 @@ void screen_buffer_repaint(screen_buffer* win){
     wrefresh(win->ptr);
 }
 
-
+void screen_buffer_free(screen_buffer* win){
+    free(win->queue);
+}

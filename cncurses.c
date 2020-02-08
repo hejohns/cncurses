@@ -31,7 +31,10 @@ void cinit(int num, ...){
         arg->dim[1] /= cCOLS;
         arg->dim[2] /= cROWS;
         arg->dim[3] /= cCOLS;
+        if(arg->queue = malloc(SCREEN_BUFFER_QUEUE_INITIAL) == NULL)
+            panic2("failed to allocate memory for screen_buffer.queue", EXIT_FAILURE);
         arg->rows = (size_t)0;
+        arg->queue_size = SCREEN_BUFFER_QUEUE_INITIAL;
     }
     va_end(args);
 }
@@ -53,8 +56,7 @@ void sigwinch_initialize(){
     }
 }
 
-//ncurses wrappers
-
+/* ncurses wrappers */
 void cresizeterm(int num, ...){
     if(cwinch){
         endwin();
