@@ -25,12 +25,13 @@ void cinit(int num, ...){
         arg->cclear = &screen_buffer_clear;
         arg->erase = &screen_buffer_erase;
         arg->repaint = &screen_buffer_repaint;
+        arg->free = &screen_buffer_free;
         arg->dim[0] /= cROWS;
         arg->dim[1] /= cCOLS;
         arg->dim[2] /= cROWS;
         arg->dim[3] /= cCOLS;
         arg->queue = calloc(SCREEN_BUFFER_QUEUE_INITIAL, sizeof(char));
-        if(arg->queue == NULL) panic2("failed to allocate memory for screen_buffer.queue", 0);
+        if(arg->queue == NULL) panic2("failed to allocate memory for screen_buffer.queue", EXIT_FAILURE);
         arg->rows = (size_t)0;
         arg->queue_size = SCREEN_BUFFER_QUEUE_INITIAL;
     }
