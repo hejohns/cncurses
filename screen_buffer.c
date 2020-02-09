@@ -70,7 +70,7 @@ char* screen_buffer_at(screen_buffer* win, int index){
      */
     static screen_buffer* lastWin;
     static char* lastPos;
-    if(index >= (int)screen_buffer_size(win)) panic2("index out of range", EXIT_FAILURE);
+    if(index >= (int)call(win, size)) panic2("index out of range", EXIT_FAILURE);
     char* ret = NULL;
     if(index == -1){
         if(lastWin!=win) panic2("incorrect usage of index=-1", EXIT_FAILURE);
