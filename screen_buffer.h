@@ -20,7 +20,8 @@ typedef struct screen_buffer{
     char* (*at)(struct screen_buffer*, int);
     // named cclear because clear is expanded as a ncurses macro
     void (*cclear)(struct screen_buffer*);
-    void (*erase)(struct screen_buffer*, size_t);
+    // named cerase because erase is expanded as a ncurses macro
+    void (*cerase)(struct screen_buffer*, size_t);
     void (*repaint)(struct screen_buffer*);
     void (*free)(struct screen_buffer*);
     WINDOW* ptr;

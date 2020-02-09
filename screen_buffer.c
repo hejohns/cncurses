@@ -64,7 +64,7 @@ size_t screen_buffer_size(screen_buffer* win){
 }
 
 char* screen_buffer_at(screen_buffer* win, int index){
-    /* NOT TESTED WITH ERASE
+    /* OK
      * Since .at is oft called sequentially (when repainting), 
      * store lastPos to reduce recalculation.
      *
@@ -100,7 +100,7 @@ char* screen_buffer_at(screen_buffer* win, int index){
         }
     }
     while(true){
-        if(isprint(*ret)){
+        if(32<=*ret && *ret<=126){
             break;
         }
         else{
@@ -133,16 +133,17 @@ void screen_buffer_clear(screen_buffer* win){
 }
 
 void screen_buffer_erase(screen_buffer* win, size_t index){
-    /* NOT TESTED
+    /* OK
      */
     if(index >= call(win, size)) panic2("index out of range", EXIT_FAILURE);
+    char* start = call2(win, at, index);
     for(size_t i=0; ; i++){
-        if(*(call2(win, at, index)+i) == EOR){
-            *(call2(win, at, index)+i) == '\0';
+        if(*(start+i) == EOR){
+            *(start+i) = '\0';
             break;
         }
         else{
-            *(call2(win, at, index)+i) == '\0';
+            *(start+i) = '\0';
         }
     }
     win->rows--;
@@ -160,7 +161,13 @@ void screen_buffer_repaint(screen_buffer* win){
      */
     wclear(win->ptr);
     for(size_t i=0; i<call(win, size); i++){
-        char* rowi = call2(win, at, i);
+        char* rowi;
+        if(i == 0){
+            rowi = call2(win, at, 0);
+        }
+        else{
+            rowi = call2(win, at, -1);
+        }
         switch(opcode(rowi)){
             case 0:
                 //wprintw delimeter

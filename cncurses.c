@@ -23,7 +23,7 @@ void cinit(int num, ...){
         arg->size = &screen_buffer_size;
         arg->at = &screen_buffer_at;
         arg->cclear = &screen_buffer_clear;
-        arg->erase = &screen_buffer_erase;
+        arg->cerase = &screen_buffer_erase;
         arg->repaint = &screen_buffer_repaint;
         arg->free = &screen_buffer_free;
         arg->dim[0] /= cROWS;

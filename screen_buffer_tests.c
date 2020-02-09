@@ -40,20 +40,22 @@ int main(int argc, char** argv){
                 if(strcmp(call2(&win1, at, -1), testRealloc)) panic2("", EXIT_FAILURE);
             }
         }
-    /* test screen_buffer_pop */
     }
     else{
         for(int i=4; i<20000; i++){
             if(strcmp(call2(&win1, at, i), testRealloc)) panic2("", EXIT_FAILURE);
         }
-    /* test screen_buffer_pop */
     }
+    /* test screen_buffer_pop */
     char* popTest;
     size_t sizeBef = call(&win1, size);
     popTest = call(&win1, pop);
     if(strcmp(testRealloc, popTest)) panic2("", EXIT_FAILURE);
     if(call(&win1, size) != sizeBef-1) panic2("", EXIT_FAILURE);
     free(popTest);
+    /* test screen_buffer_erase */
+    call2(&win1, cerase, 0);
+    if(strcmp(call2(&win1, at, 0), test2)) panic2("", EXIT_FAILURE);
     /* test screen_buffer_clear */
     call(&win1, cclear);
     if(call(&win1, size) != 0) panic2("", EXIT_FAILURE);
