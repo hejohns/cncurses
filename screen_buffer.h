@@ -15,7 +15,7 @@ struct screen_buffer;
 typedef struct screen_buffer{
     /* "public" */
     void (*push)(struct screen_buffer*, char*);
-    char* (*pop)(struct screen_buffer*, char*);
+    char* (*pop)(struct screen_buffer*);
     size_t (*size)(struct screen_buffer*);
     char* (*at)(struct screen_buffer*, int);
     // named cclear because clear is expanded as a ncurses macro
@@ -33,7 +33,7 @@ typedef struct screen_buffer{
 } screen_buffer;
 
 void screen_buffer_push(screen_buffer* win, char* cmd);
-char* screen_buffer_pop(screen_buffer* win, char*);
+char* screen_buffer_pop(screen_buffer* win);
 size_t screen_buffer_size(screen_buffer* win);
 char* screen_buffer_at(screen_buffer* win, int index);
 void screen_buffer_clear(screen_buffer* win);

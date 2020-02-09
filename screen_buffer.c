@@ -47,13 +47,11 @@ void screen_buffer_push(screen_buffer* win, char* cmd){
     win->rows++;
 }
 
-char* screen_buffer_pop(screen_buffer* win, char* dest){
-    if(screen_buffer_size(win) == 0){
-        panic("buffer is empty--nothing to pop", EXIT_FAILURE);
-    }
-    dest = strncpy(dest, screen_buffer_at(win, screen_buffer_size(win)-1), SCREEN_BUFFER_COLS_MAX);
+char* screen_buffer_pop(screen_buffer* win){
+    if(call(win, size) == 0) panic2("buffer is empty--nothing to pop", EXIT_FAILURE);
+    char* ret = strdup(call2(win, at, call(win, size)-1));
     win->rows--;
-    return dest;
+    return ret;
 }
 
 size_t screen_buffer_size(screen_buffer* win){
