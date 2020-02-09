@@ -7,6 +7,8 @@
 #include "screen_buffer.h"
 
 
+typedef struct screen_buffer screen_buffer;
+
 //globals
 int cROWS, cCOLS;
 extern bool cwinch;

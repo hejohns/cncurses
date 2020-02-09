@@ -11,9 +11,7 @@
 bool cwinch = false;
 
 void cinit(int num, ...){
-    if(num <0){
-        panic("Number of windows must be greater than 0", EXIT_FAILURE);
-    }
+    if(num <0) panic2("Number of windows must be greater than 0", EXIT_FAILURE);
     va_list args;
     va_start(args, num);
     for(int i=0; i<num; i++){
@@ -31,8 +29,8 @@ void cinit(int num, ...){
         arg->dim[1] /= cCOLS;
         arg->dim[2] /= cROWS;
         arg->dim[3] /= cCOLS;
-        if(arg->queue = malloc(SCREEN_BUFFER_QUEUE_INITIAL) == NULL)
-            panic2("failed to allocate memory for screen_buffer.queue", EXIT_FAILURE);
+        arg->queue = calloc(SCREEN_BUFFER_QUEUE_INITIAL, sizeof(char));
+        if(arg->queue == NULL) panic2("failed to allocate memory for screen_buffer.queue", 0);
         arg->rows = (size_t)0;
         arg->queue_size = SCREEN_BUFFER_QUEUE_INITIAL;
     }
