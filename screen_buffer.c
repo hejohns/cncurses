@@ -5,9 +5,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <curses.h>
 #include "screen_buffer.h"
 
 
+extern int cROWS, cCOLS;
 static const char EOR = -10;
 
 void screen_buffer_push(screen_buffer* win, char* cmd){

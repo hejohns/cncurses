@@ -2,14 +2,6 @@
 #ifndef SCREEN_BUFFER_H
 #define SCREEN_BUFFER_H
 
-#include "macros.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include "cncurses.h"
-
 
 struct screen_buffer;
 typedef struct screen_buffer{
@@ -33,13 +25,36 @@ typedef struct screen_buffer{
     size_t rows;
 } screen_buffer;
 
+/* RME
+ */
 void screen_buffer_push(screen_buffer* win, char* cmd);
+
+/* RME
+ */
 char* screen_buffer_pop(screen_buffer* win);
+
+/* RME
+ */
 size_t screen_buffer_size(screen_buffer* win);
+
+/* RME
+ */
 char* screen_buffer_at(screen_buffer* win, int index);
+
+/* RME
+ */
 void screen_buffer_clear(screen_buffer* win);
+
+/* RME
+ */
 void screen_buffer_erase(screen_buffer* win, size_t index);
+
+/* RME
+ */
 void screen_buffer_repaint(screen_buffer* win);
+
+/* RME
+ */
 void screen_buffer_free(screen_buffer* win);
 
 
