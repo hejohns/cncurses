@@ -1,19 +1,29 @@
-cncurses.exe: main.o cncurses.o screen_buffer.o misc.o macros.h
-	gcc -std=gnu11 -lncurses -Wpedantic -Wall -Wextra -g main.o cncurses.o screen_buffer.o misc.o -o cncurses.exe
+# keep -Wpedantic until module is considered stable
+
+CXX := gcc
+CXXFLAGS := -std=gnu11 -Wall -Wextra -ggdb
+
+cncurses.exe: main.o cncurses.o screen_buffer.o cstring.o misc.o
+	$(CXX) $(CXXFLAGS) -lncurses -Wpedantic $^ -o $@ 
 	ctags -R
-main.o: main.c macros.h
-	gcc -std=gnu11 -lncurses -Wpedantic -Wall -Wextra -c main.c
+screen_buffer_tests.exe: screen_buffer_tests.o screen_buffer.o cncurses.o
+	$(CXX) $(CXXFLAGS) -Wpedantic -lncurses $^ -o $@
+main.o: main.c
+	$(CXX) $(CXXFLAGS) -lncurses -Wpedantic $^ -c $@
 	ctags -R
-cncurses.o: cncurses.h cncurses.c macros.h
-	gcc -std=gnu11 -Wall -Wextra -c cncurses.c
+cncurses.o: cncurses.c
+	$(CXX) $(CXXFLAGS) -Wpedantic $^ -c $@
 	ctags -R
-screen_buffer.o: screen_buffer.h screen_buffer.c macros.h
-	gcc -std=gnu11 -Wall -Wextra -c screen_buffer.c
+screen_buffer.o: screen_buffer.c
+	$(CXX) $(CXXFLAGS) -Wpedantic $^ -c $@
 	ctags -R
-misc.o: misc.h misc.c macros.h
-	gcc -std=gnu11 -Wpedantic -Wall -Wextra -c misc.c
+screen_buffer_tests.o: screen_buffer_tests.c
+	$(CXX) $(CXXFLAGS) -Wpedantic -lncurses $^ -c $@
+cstring.o: cstring.c
+	$(CXX) $(CXXFLAGS) -Wpedantic $^ -c $@
+	ctags- R
+misc.o: misc.c
+	$(CXX) $(CXXFLAGS) -Wpedantic $^ -c $@
 	ctags -R
-screen_buffer_tests.exe: screen_buffer_tests.c screen_buffer.h screen_buffer.c cncurses.h cncurses.c
-	gcc -std=gnu11 -lncurses -Wall -Wextra -g screen_buffer_tests.c screen_buffer.h screen_buffer.c cncurses.h cncurses.c -o screen_buffer_tests.exe
 clean:
 	rm *.exe *.o
