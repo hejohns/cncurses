@@ -147,17 +147,14 @@ parent:;
     //begin{body]
 {
     //as with any tmp reg, do not assume regs will be untouched if code is not directly sequential
-    size_t reg0Size = BUFFER_COLS_MAX/2;
-    char* reg0 = malloc(reg0Size);
-    size_t reg1Size = BUFFER_COLS_MAX/2;
-    char* reg1 = malloc(reg1Size);
+    size_t reg0Size = 100;
+    char* reg0 = malloc(100);
+    size_t reg1Size = 100;
+    char* reg1 = malloc(100);
     int ch;
     flushinp();
     while((ch = getch()) != EXIT_KEY){
         //for testing. Will replace screen_buffer queue with less crude implementation
-        if(reg0Size > BUFFER_COLS_MAX || reg1Size > BUFFER_COLS_MAX){
-            panic("REG CHECK", EXIT_FAILURE);
-        }
         switch(ch){
             case RESET_KEY:;
                 endwin();

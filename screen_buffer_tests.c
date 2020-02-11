@@ -17,6 +17,9 @@ screen_buffer win1;
 screen_buffer win2, win3;
 
 int main(int argc, char** argv){
+    win1.ptr = cnewwin(1, .5, 0, 0);
+    win2.ptr = cnewwin(.5, .5, 0, .5);
+    win3.ptr = cnewwin(.5, .5, .5, .5);
     cinit(1, &win1);
     cinit(2, &win2, &win3);
     /* test screen_buffer_at/screen_buffer_push */

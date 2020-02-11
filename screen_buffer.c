@@ -1,5 +1,4 @@
 //screen_buffer.c
-
 #include "macros.h"
 #include <string.h>
 #include <stdio.h>
@@ -31,7 +30,7 @@ void screen_buffer_push(screen_buffer* win, char* cmd){
             nextAvail++;
         }
         if((nextAvail-win->queue)+strlen(cmd)+2 > win->queue_size/1.5){
-            char* tmp = realloc(win->queue, (win->queue_size + strlen(cmd)+2)*2);
+            char* tmp = realloc(win->queue, (win->queue_size + strlen(cmd)+2)*2*sizeof(char));
             if(tmp == NULL){
                 fprintf(stderr, "warning: realloc failed. Attemping to continue, "\
                     "%s, %s, %d\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);
@@ -121,7 +120,7 @@ void screen_buffer_clear(screen_buffer* win){
      * https://stackoverflow.com/questions/1401234/differences-between-using-realloc-vs-free-malloc-functions
      */
     win->rows = (size_t)0;
-    char* tmp = realloc(win->queue, SCREEN_BUFFER_QUEUE_INITIAL);
+    char* tmp = realloc(win->queue, SCREEN_BUFFER_QUEUE_INITIAL*sizeof(char));
     if(tmp == NULL){
         fprintf(stderr, "warning: realloc failed. Using more memory than needed, "\
             "%s, %s, %d\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);

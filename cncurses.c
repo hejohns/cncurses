@@ -82,4 +82,5 @@ void cresizeterm(int num, ...){
 }
 
 void cwprintw(screen_buffer* win, char* str){
+    call2(win, push, str);
 }
