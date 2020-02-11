@@ -148,7 +148,7 @@ void screen_buffer_erase(screen_buffer* win, size_t index){
     win->rows--;
 }
 
-int opcode(char* row){
+static int opcode(char* row){
     /* OK
      * helper func
      */

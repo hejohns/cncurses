@@ -6,7 +6,7 @@
 
 #define SIZE_ToverCHAR ((sizeof(size_t)/sizeof(char)) + (sizeof(size_t)%sizeof(char)))
 
-size_t cstring_size(char* ptr){
+static size_t cstring_size(char* ptr){
     size_t* tmp = (size_t*)(ptr-SIZE_ToverCHAR);
     return *tmp;
 }
