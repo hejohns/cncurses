@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "cncurses.h"
+#include "screen_buffer.h"
 
 
 screen_buffer win1, win2, win3, win4;

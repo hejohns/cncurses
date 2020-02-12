@@ -21,7 +21,7 @@ screen_buffer_tests.o: screen_buffer_tests.c
 	$(CXX) $(CXXFLAGS) -Wpedantic -lncurses $^ -c
 cstring.o: cstring.c
 	$(CXX) $(CXXFLAGS) -Wpedantic $^ -c
-	ctags- R
+	ctags -R
 misc.o: misc.c
 	$(CXX) $(CXXFLAGS) -Wpedantic $^ -c
 	ctags -R

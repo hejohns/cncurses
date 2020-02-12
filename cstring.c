@@ -1,4 +1,5 @@
 //cstring.c
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -33,7 +34,7 @@ int cstringSprintf(char** ptr, const char* format, ...){
         char* tmp = *ptr-SIZE_ToverCHAR;
         char* tmp2 = realloc(tmp, (SIZE_ToverCHAR+len+1)*sizeof(char));
         if(tmp == NULL){
-            fprinf(stderr, "could not allocate memory for string. Attmempting to continue\n");
+            fprintf(stderr, "could not allocate memory for string. Attmempting to continue\n");
         }
         else{
             tmp = tmp2;
