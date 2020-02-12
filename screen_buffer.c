@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <stdarg.h>
 #include <curses.h>
 #include "screen_buffer.h"
 

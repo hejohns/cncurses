@@ -2,9 +2,6 @@
 #ifndef CNCURSES_H
 #define CNCURSES_H
 
-#include <curses.h>
-#include <signal.h>
-#include "screen_buffer.h"
 
 
 typedef struct screen_buffer screen_buffer;

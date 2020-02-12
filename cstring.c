@@ -23,13 +23,24 @@ void cstringFree(char** ptr){
     *ptr = NULL;
 }
 
-int cstringSprintf(char* ptr, const char* format, ...){
+int cstringSprintf(char** ptr, const char* format, ...){
 /* https://stackoverflow.com/questions/37947200/c-variadic-wrapper
  */
     va_list args;
     va_start(args, format);
-    int len = vsnprintf(ptr, cstring_size(ptr), format, args);
-    if(len > cstring_size(ptr)){
-        f
+    int len = vsnprintf(*ptr, cstring_size(*ptr), format, args);
+    if(len > cstring_size(*ptr)){
+        char* tmp = *ptr-SIZE_ToverCHAR;
+        char* tmp2 = realloc(tmp, (SIZE_ToverCHAR+len+1)*sizeof(char));
+        if(tmp == NULL){
+            fprinf(stderr, "could not allocate memory for string. Attmempting to continue\n");
+        }
+        else{
+            tmp = tmp2;
+            size_t* tmp3 = tmp;
+            *tmp3 = len+SIZE_ToverCHAR+len+1;
+            *ptr = tmp2+SIZE_ToverCHAR;
+        }
     }
+    return len;
 }

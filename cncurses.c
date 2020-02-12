@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <signal.h>
+#include <curses.h>
 #include "cncurses.h"
 #include "screen_buffer.h"
+#include "cstring.h"
 
 
 bool cwinch = false;
@@ -79,6 +82,17 @@ void cresizeterm(int num, ...){
     else{
         //do nothing
     }
+}
+
+static int containsDelim(char* str){
+    int ret = 0;
+    char dummy[2] = DELIM;
+    for(unsigned int i=0; i<strlen(str); i++){
+        if(str[i] == dummy[0]){
+            ret++;
+        }
+    }
+    return ret;
 }
 
 void cwprintw(screen_buffer* win, char* str){
