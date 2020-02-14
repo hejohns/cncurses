@@ -105,7 +105,7 @@ parent:;
     FILE* stdout_gdb2r = fdopen(fd3[0], "r");
     FILE* stdin_gdb2w = fdopen(fd4[1], "w");
     initscr();
-    timeout(50);
+    timeout(100);
     curs_set(0);
     getmaxyx(stdscr, cROWS, cCOLS);
     cbreak();
@@ -146,6 +146,9 @@ parent:;
     fflush(stdin_gdb1w);
     //end{initialization}
     //begin{body]
+    //we don't want gdb warranty information for side windows
+    fseek(stdout_gdb1r, 0, SEEK_END);
+    fseek(stdout_gdb2r, 0, SEEK_END);
 {
     int ch;
     flushinp();
@@ -161,33 +164,28 @@ parent:;
                 char* tmp2;
                 tmp = cstringInit(&tmp, 10000);
                 tmp2 = cstringInit(&tmp2, 10000);
-                for(; fgets(tmp2, 100, stdout_gdb2r) != NULL; ){
+                for(; fgets(tmp2, 100, stdout_gdb1r) != NULL; ){
                     cstringStrcat(&tmp, tmp2);
                 }
                 cwprintw(&win1, "%s", tmp);
                 cwprintw(&win2, "%s", tmp);
-                cwprintw(&win3, "%s", tmp);
                 cwprintw(&win4, "%s", tmp);
                 cstringFree(&tmp);
+                cstringFree(&tmp2);
                 }
                 break;
             case KEY_UP:;
                 //get breakpoints
-                /*
                 fprintf(stdin_gdb2w, "info b\n");
                 fflush(stdin_gdb2w);
                 call(&win3, cclear);
-                if(getline(&reg1, &reg1Size, stdout_gdb2r) != EOF)
+                char* line = NULL;
+                size_t n;
+                while(getline(&line, &n, stdout_gdb2r) != -1)
                 {
-                    strcpy(reg0, reg1);
-                    for(; getline(&reg1, &reg1Size, stdout_gdb2r) != EOF && reg1[0] != '('; ){
-                        strcat(reg0, reg1);
-                    }
-                    snprintf(reg1, reg1Size, "011"DELIM"%s", reg0);
-                    call2(&win3, push, reg1);
+                    cwprintw(&win3, "%s", line);
                 }
-                //cwprintw(win3, );
-                */
+                free(line);
                 break;
             case KEY_RIGHT:;
                 break;
@@ -201,11 +199,11 @@ parent:;
                 //alphanumerics
                 break;
         }
-    cresizeterm(4, &win1, &win2, &win3, &win4);
-    call(&win1, repaint);
-    call(&win2, repaint);
-    call(&win3, repaint);
-    call(&win4, repaint);
+        cresizeterm(4, &win1, &win2, &win3, &win4);
+        call(&win1, repaint);
+        call(&win2, repaint);
+        call(&win3, repaint);
+        call(&win4, repaint);
     }
 }
     //end{body}}
@@ -214,6 +212,10 @@ parent:;
     cwattroff(win2, COLOR_PAIR(2));
     cwattroff(win3, COLOR_PAIR(3));
     cwattroff(win4, COLOR_PAIR(4));
+    call(&win1, free);
+    call(&win2, free);
+    call(&win3, free);
+    call(&win4, free);
     endwin();
     if(kill(forkreturn1, SIGTERM) || kill(forkreturn2, SIGTERM)){
         kill(forkreturn1, SIGKILL);

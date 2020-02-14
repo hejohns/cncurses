@@ -102,13 +102,13 @@ void cwprintw(screen_buffer* win, const char* fmt, ...){
     char* cstr2;
     cstr = cstringInit(&cstr, 80);
     cstr2 = cstringInit(&cstr2, 80);
-    cstringVsprintf(&cstr, fmt, args);
+    int len = cstringVsprintf(&cstr, fmt, args);
     va_end(args);
     /* trying to push an empty cstr causes segfault
      * not exactly sure why but at least don't push
      * useless opcodes
      */
-    if(strlen(cstr) == 0){
+    if(len == 0){
         cstringFree(&cstr);
         cstringFree(&cstr2);
         return;

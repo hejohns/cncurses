@@ -20,7 +20,21 @@ void screen_buffer_push(screen_buffer* win, char* cmd){
      */
     //base case to avoid call(win, at, -1) accidentally
     if(call(win, size) == 0){
-        strcpy(win->queue, cmd);
+        if(strlen(cmd)+2 > win->queue_size/1.5){
+            char* tmp = realloc(win->queue, (win->queue_size + strlen(cmd)+2)*2);
+            if(tmp == NULL){
+                fprintf(stderr, "warning: realloc failed. Attemping to continue, "\
+                    "%s, %s, %d\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);
+            }
+            else{
+                win->queue = tmp;
+                win->queue_size = (win->queue_size + strlen(cmd)+2)*2;
+            }
+            strcpy(win->queue, cmd);
+        }
+        else{
+            strcpy(win->queue, cmd);
+        }
         *(win->queue+strlen(cmd)+1) = EOR;
     }
     else{
@@ -135,13 +149,13 @@ void screen_buffer_clear(screen_buffer* win){
      * Supposedly, realloc is faster than free+malloc
      * https://stackoverflow.com/questions/1401234/differences-between-using-realloc-vs-free-malloc-functions
      */
-    win->rows = (size_t)0;
     char* tmp = realloc(win->queue, SCREEN_BUFFER_QUEUE_INITIAL);
     if(tmp == NULL){
         fprintf(stderr, "warning: realloc failed. Using more memory than needed, "\
             "%s, %s, %d\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);
     }
     else{
+        win->rows = (size_t)0;
         win->queue = tmp;
         win->queue_size = (size_t)SCREEN_BUFFER_QUEUE_INITIAL;
     }
@@ -263,6 +277,7 @@ void screen_buffer_repaint(screen_buffer* win){
                 wprintw(win->ptr, "%s", str);
                 //restore copy
                 strcpy(rowi, preserve);
+                free(str);
                 free(preserve);
                 }
                 break;
