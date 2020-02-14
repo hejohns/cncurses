@@ -6,7 +6,8 @@
 
 typedef struct screen_buffer screen_buffer;
 
-//globals
+/* globals */
+//declared in header so main also has reference implicitly (important for cnewterm macro)
 int cROWS, cCOLS;
 extern bool cwinch;
 
@@ -37,5 +38,6 @@ void sigwinch_initialize();
 void cresizeterm(int num, ...);
 
 void cwprintw(screen_buffer* win, char* str);
-/*                           */
+/* * * * * * * * * * * * * * */
+
 #endif /* CNCURSES_H */

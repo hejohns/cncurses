@@ -25,35 +25,50 @@ typedef struct screen_buffer{
     size_t rows;
 } screen_buffer;
 
-/* RME
+/* REQUIRES:
+ * MODIFIES:
+ * EFFECTS:
  */
 void screen_buffer_push(screen_buffer* win, char* cmd);
 
-/* RME
+/* REQUIRES: call(win, size) >= 1
+ * MODIFIES:win->rows--
+ * EFFECTS: returns a string allocated with strdup. Be
+ * sure to free the return
  */
 char* screen_buffer_pop(screen_buffer* win);
 
-/* RME
+/* NOTES: simply returns win->rows
  */
-size_t screen_buffer_size(screen_buffer* win);
+inline size_t screen_buffer_size(screen_buffer* win);
 
-/* RME
+/* REQUIRES: 
+ * MODIFIES:
+ * EFFECTS:
  */
 char* screen_buffer_at(screen_buffer* win, int index);
 
-/* RME
+/* REQUIRES:
+ * MODIFIES:
+ * EFFECTS:
  */
 void screen_buffer_clear(screen_buffer* win);
 
-/* RME
+/* REQUIRES:
+ * MODIFIES:
+ * EFFECTS:
  */
 void screen_buffer_erase(screen_buffer* win, size_t index);
 
-/* RME
+/* REQUIRES:
+ * MODIFIES:
+ * EFFECTS:
  */
 void screen_buffer_repaint(screen_buffer* win);
 
-/* RME
+/* REQUIRES:
+ * MODIFIES:
+ * EFFECTS:
  */
 void screen_buffer_free(screen_buffer* win);
 

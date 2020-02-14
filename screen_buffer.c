@@ -7,8 +7,9 @@
 #include <curses.h>
 #include "screen_buffer.h"
 
-
+//declared in cncurses.h
 extern int cROWS, cCOLS;
+//arbitrary, just needs to be <0 && >=-128
 static const char EOR = -10;
 
 void screen_buffer_push(screen_buffer* win, char* cmd){
@@ -17,11 +18,14 @@ void screen_buffer_push(screen_buffer* win, char* cmd){
      * has almost no effect on runtime, even when pushing thousands of
      * times sequentially.
      */
+    //base case to avoid call(win, at, -1) accidentally
     if(call(win, size) == 0){
         strcpy(win->queue, cmd);
         *(win->queue+strlen(cmd)+1) = EOR;
     }
     else{
+        //find pointer to next available char in win->queue
+        //(potential for lots of off-by-one errors...)
         char* nextAvail = call2(win, at, call(win, size)-1);
         while(true){
             if(*nextAvail == EOR){
@@ -30,6 +34,7 @@ void screen_buffer_push(screen_buffer* win, char* cmd){
             }
             nextAvail++;
         }
+        //realloc win->queue if necessary
         if((nextAvail-win->queue)+strlen(cmd)+2 > win->queue_size/1.5){
             char* tmp = realloc(win->queue, (win->queue_size + strlen(cmd)+2)*2);
             if(tmp == NULL){
@@ -42,14 +47,18 @@ void screen_buffer_push(screen_buffer* win, char* cmd){
                 win->queue_size = (win->queue_size + strlen(cmd)+2)*2;
             }
         }
+        //actually copy cmd into win->queue now we know it's safe
         strcpy(nextAvail, cmd);
         *(nextAvail+strlen(cmd)+1) = EOR;
     }
+    //increment to keep track of size
     win->rows++;
 }
 
 char* screen_buffer_pop(screen_buffer* win){
     /* OK
+     *
+     * as strdup is used, be sure to free the return
      */
     if(call(win, size) == 0) panic2("buffer is empty--nothing to pop", EXIT_FAILURE);
     char* ret = strdup(call2(win, at, call(win, size)-1));
@@ -57,7 +66,7 @@ char* screen_buffer_pop(screen_buffer* win){
     return ret;
 }
 
-size_t screen_buffer_size(screen_buffer* win){
+inline size_t screen_buffer_size(screen_buffer* win){
     /* OK
      */
     return win->rows;
@@ -99,14 +108,20 @@ char* screen_buffer_at(screen_buffer* win, int index){
             }
         }
     }
+    /* set ret to next printable charachter (ex: erasing is 
+     * achieved by nulling over previous contents, thus
+     * it is possible by this point that ret does not
+     * actually point to the start of a string proper)
+     */
     while(true){
-        if(32<=*ret && *ret<=126){
+        if(isprint(*ret)){
             break;
         }
         else{
             ret++;
         }
     }
+    //update static variables
     lastWin = win;
     lastPos = ret;
     return ret;
@@ -137,6 +152,7 @@ void screen_buffer_erase(screen_buffer* win, size_t index){
      */
     if(index >= call(win, size)) panic2("index out of range", EXIT_FAILURE);
     char* start = call2(win, at, index);
+    //make sure to null out EOR
     for(size_t i=0; ; i++){
         if(*(start+i) == EOR){
             *(start+i) = '\0';

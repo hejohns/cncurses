@@ -38,11 +38,18 @@ int cstringSprintf(char** ptr, const char* format, ...){
         }
         else{
             tmp = tmp2;
-            *(size_t*)tmp = sizeof(size_t)+len+1;
+            *(size_t*)tmp = len;
             *ptr = tmp2+sizeof(size_t);
             vsnprintf(*ptr, len+1, format, args2);
         }
     }
     va_end(args2);
     return len;
+}
+
+char* cstringStrcat(char** dest, char* src){
+    char* destCpy = strdup(*dest);
+    cstringSprintf(dest, "%s%s", destCpy, src);
+    free(destCpy);
+    return *dest;
 }
