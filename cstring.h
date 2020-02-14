@@ -27,6 +27,12 @@ void cstringFree(char** ptr);
  * MODIFIES:
  * EFFECTS:
  */
+int cstringVsprintf(char** ptr, const char* format, va_list ap);
+
+/* REQUIRES:
+ * MODIFIES:
+ * EFFECTS:
+ */
 int cstringSprintf(char** str, const char* format, ...);
 
 /* REQUIRES:

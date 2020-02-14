@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "cncurses.h"
 #include "screen_buffer.h"
+#include "cstring.h"
 
 
 screen_buffer win1, win2, win3, win4;
@@ -94,7 +95,6 @@ int main(int argc, char** argv){
         }
     }
 parent:;
-#pragma GCC diagnostic ignored "-Wunused-variable"
     //close unused fds
     close(fd1[1]);
     close(fd2[0]);
@@ -135,10 +135,10 @@ parent:;
     clearok(win2.ptr, true);
     clearok(win3.ptr, true);
     clearok(win4.ptr, true);
-    immedok(win1.ptr, true);
-    immedok(win2.ptr, true);
-    immedok(win3.ptr, true);
-    immedok(win4.ptr, true);
+    immedok(win1.ptr, false);
+    immedok(win2.ptr, false);
+    immedok(win3.ptr, false);
+    immedok(win4.ptr, false);
     scrollok(win1.ptr, true);
     scrollok(win2.ptr, true);
     scrollok(win3.ptr, true);
@@ -147,34 +147,33 @@ parent:;
     //end{initialization}
     //begin{body]
 {
-    //as with any tmp reg, do not assume regs will be untouched if code is not directly sequential
-    size_t reg0Size = 100;
-    char* reg0 = malloc(100);
-    size_t reg1Size = 100;
-    char* reg1 = malloc(100);
     int ch;
     flushinp();
     while((ch = getch()) != EXIT_KEY){
-        //for testing. Will replace screen_buffer queue with less crude implementation
         switch(ch){
             case RESET_KEY:;
                 endwin();
                 system("reset");
                 break;
             case KEY_LEFT:;
-                char tmp[80];
-                char tmp2[90];
-                for(int i=0; i<153; i++){
-                    fgets(tmp, 80, stdout_gdb2r);
-                    sprintf(tmp2, "011"DELIM"%s", tmp);
-                    call2(&win1, push, tmp2);
-                    call2(&win2, push, tmp2);
-                    call2(&win3, push, tmp2);
-                    call2(&win4, push, tmp2);
+                {
+                char* tmp;
+                char* tmp2;
+                tmp = cstringInit(&tmp, 10000);
+                tmp2 = cstringInit(&tmp2, 10000);
+                for(; fgets(tmp2, 100, stdout_gdb2r) != NULL; ){
+                    cstringStrcat(&tmp, tmp2);
+                }
+                cwprintw(&win1, "%s", tmp);
+                cwprintw(&win2, "%s", tmp);
+                cwprintw(&win3, "%s", tmp);
+                cwprintw(&win4, "%s", tmp);
+                cstringFree(&tmp);
                 }
                 break;
             case KEY_UP:;
                 //get breakpoints
+                /*
                 fprintf(stdin_gdb2w, "info b\n");
                 fflush(stdin_gdb2w);
                 call(&win3, cclear);
@@ -188,6 +187,7 @@ parent:;
                     call2(&win3, push, reg1);
                 }
                 //cwprintw(win3, );
+                */
                 break;
             case KEY_RIGHT:;
                 break;
@@ -207,8 +207,6 @@ parent:;
     call(&win3, repaint);
     call(&win4, repaint);
     }
-    free(reg0);
-    free(reg1);
 }
     //end{body}}
     //begin{termination}

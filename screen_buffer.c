@@ -66,7 +66,7 @@ char* screen_buffer_pop(screen_buffer* win){
     return ret;
 }
 
-inline size_t screen_buffer_size(screen_buffer* win){
+extern inline size_t screen_buffer_size(screen_buffer* win){
     /* OK
      */
     return win->rows;
@@ -185,7 +185,7 @@ void screen_buffer_repaint(screen_buffer* win){
             rowi = call2(win, at, -1);
         }
         switch(opcode(rowi)){
-            case 0:
+            case 1:
                 //wprintw delimeter
                 wprintw(win->ptr, DELIM);
                 break;
@@ -267,6 +267,7 @@ void screen_buffer_repaint(screen_buffer* win){
                 }
                 break;
             case 12:;
+                // not needed; all queues stored as chars. Kept for reference
                 // wprintw single decimal
                 // args: dec
                 {
@@ -283,6 +284,7 @@ void screen_buffer_repaint(screen_buffer* win){
                 }
                 break;
             case 13:;
+                // not needed; all queues stored as chars. Kept for reference
                 // wprintw single float
                 // args: flt
                 {

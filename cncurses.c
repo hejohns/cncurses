@@ -95,6 +95,29 @@ static int containsDelim(char* str){
     return ret;
 }
 
-void cwprintw(screen_buffer* win, char* str){
-    call2(win, push, str);
+void cwprintw(screen_buffer* win, const char* fmt, ...){
+    va_list args;
+    va_start(args, fmt);
+    char* cstr;
+    char* cstr2;
+    cstr = cstringInit(&cstr, 80);
+    cstr2 = cstringInit(&cstr2, 80);
+    cstringVsprintf(&cstr, fmt, args);
+    va_end(args);
+    /* trying to push an empty cstr causes segfault
+     * not exactly sure why but at least don't push
+     * useless opcodes
+     */
+    if(strlen(cstr) == 0){
+        cstringFree(&cstr);
+        cstringFree(&cstr2);
+        return;
+    }
+    else{
+        cstringSprintf(&cstr2, "011"DELIM"%s", cstr);
+        call2(win, push, cstr2);
+        cstringFree(&cstr);
+        cstringFree(&cstr2);
+    }
 }
+/* * * * * * * * * */

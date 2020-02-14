@@ -37,7 +37,7 @@ void sigwinch_initialize();
 /* ncurses wrapper functions */
 void cresizeterm(int num, ...);
 
-void cwprintw(screen_buffer* win, char* str);
+void cwprintw(screen_buffer* win, const char* fmt, ...);
 /* * * * * * * * * * * * * * */
 
 #endif /* CNCURSES_H */

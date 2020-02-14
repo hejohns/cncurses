@@ -9,11 +9,11 @@
 #define RESET_KEY KEY_SEND
 
 //used to call function pointers in structs (passes name arg into function automatically)
-#define call(name, function) (name)->function(name)
-#define call2(name, function, ...) (name)->function(name, __VA_ARGS__)
+#define call(name, function) ((name)->function(name))
+#define call2(name, function, ...) ((name)->function(name, __VA_ARGS__))
 
 
-#define panic(mesg, exit_code) (fprintf(stderr, "fatal: "mesg", %s, %d\n", __FILE__, __LINE__), exit(exit_code))
+#define panic(mesg, exit_code) (fprintf(stderr, "fatal: "mesg", %s, %s, %d\n", __FILE__,__func__,  __LINE__), exit(exit_code))
 #define panic2(mesg, exit_code) (fprintf(stderr, "fatal: "mesg", %s, %s, %d\n", __FILE__, __PRETTY_FUNCTION__, __LINE__), exit(exit_code))
 
 #define cnewwin(y, x, sy, sx) newwin(y*cROWS, x*cCOLS, sy*cROWS, sx*cCOLS)

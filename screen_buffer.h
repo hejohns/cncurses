@@ -40,7 +40,7 @@ char* screen_buffer_pop(screen_buffer* win);
 
 /* NOTES: simply returns win->rows
  */
-inline size_t screen_buffer_size(screen_buffer* win);
+size_t screen_buffer_size(screen_buffer* win);
 
 /* REQUIRES: 
  * MODIFIES:

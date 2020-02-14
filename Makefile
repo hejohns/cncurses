@@ -6,7 +6,7 @@ CXXFLAGS := -std=gnu11 -Wall -Wextra -ggdb
 cncurses.exe: main.o cncurses.o screen_buffer.o cstring.o misc.o
 	$(CXX) $(CXXFLAGS) -lncurses -Wpedantic $^ -o $@ 
 	ctags -R
-screen_buffer_tests.exe: screen_buffer_tests.o screen_buffer.o cncurses.o
+screen_buffer_tests.exe: screen_buffer_tests.o screen_buffer.o cncurses.o cstring.o
 	$(CXX) $(CXXFLAGS) -Wpedantic -lncurses $^ -o $@
 cstring_tests.exe: cstring_tests.o cstring.o
 	$(CXX) $(CXXFLAGS) -Wpedantic $^ -o $@
