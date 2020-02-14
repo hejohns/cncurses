@@ -130,7 +130,6 @@ parent:;
     cwattron(win4, COLOR_PAIR(4));
     clear();
     refresh();
-    fprintf(stdin_gdb1w, "h\n");
     clearok(win1.ptr, true);
     clearok(win2.ptr, true);
     clearok(win3.ptr, true);
@@ -143,15 +142,19 @@ parent:;
     scrollok(win2.ptr, true);
     scrollok(win3.ptr, true);
     scrollok(win4.ptr, true);
-    fflush(stdin_gdb1w);
     //end{initialization}
     //begin{body]
     //we don't want gdb warranty information for side windows
-    fseek(stdout_gdb1r, 0, SEEK_END);
     fseek(stdout_gdb2r, 0, SEEK_END);
 {
     int ch;
     flushinp();
+    endwin();
+    system("reset");
+    char* win1_cstr1;
+    char* win1_cstr2;
+    win1_cstr1 = cstringInit(&win1_cstr1, 100);
+    win1_cstr2 = cstringInit(&win1_cstr2, 10);
     while((ch = getch()) != EXIT_KEY){
         switch(ch){
             case RESET_KEY:;
@@ -167,7 +170,6 @@ parent:;
                 for(; fgets(tmp2, 100, stdout_gdb1r) != NULL; ){
                     cstringStrcat(&tmp, tmp2);
                 }
-                cwprintw(&win1, "%s", tmp);
                 cwprintw(&win2, "%s", tmp);
                 cwprintw(&win4, "%s", tmp);
                 cstringFree(&tmp);
@@ -176,6 +178,7 @@ parent:;
                 break;
             case KEY_UP:;
                 //get breakpoints
+                {
                 fprintf(stdin_gdb2w, "info b\n");
                 fflush(stdin_gdb2w);
                 call(&win3, cclear);
@@ -186,25 +189,43 @@ parent:;
                     cwprintw(&win3, "%s", line);
                 }
                 free(line);
+                }
                 break;
             case KEY_RIGHT:;
+                fprintf(stdin_gdb2w, "b 1\n");
+                fflush(stdin_gdb2w);
                 break;
             case KEY_BACKSPACE:;
                 break;
-            case '\n':;
-                break;
+            case '\n':
+                 fprintf(stdin_gdb1w, "\n");
+                 fflush(stdin_gdb1w);
+                 break;
             case ERR:;
                 break;
             default:;
                 //alphanumerics
+                fputc(ch, stdin_gdb1w);
+                fflush(stdin_gdb1w);
                 break;
         }
         cresizeterm(4, &win1, &win2, &win3, &win4);
-        call(&win1, repaint);
+        for(int c; (c = fgetc(stdout_gdb1r)) != EOF; ){
+            cstringSprintf(&win1_cstr2, "%c", c);
+            cstringStrcat(&win1_cstr1, win1_cstr2);
+        }
+        if(strlen(win1_cstr1) > 0){
+            cwprintw(&win1, "%s", win1_cstr1);
+            call(&win1, repaint);
+        }
+        win1_cstr1[0] = '\0';
+        win1_cstr2[0] = '\0';
         call(&win2, repaint);
         call(&win3, repaint);
         call(&win4, repaint);
     }
+    cstringFree(&win1_cstr1);
+    cstringFree(&win1_cstr2);
 }
     //end{body}}
     //begin{termination}
