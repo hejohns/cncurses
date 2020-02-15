@@ -109,15 +109,26 @@ void cwprintw(screen_buffer* win, const char* fmt, ...){
      * useless opcodes
      */
     if(len == 0){
-        cstringFree(&cstr);
-        cstringFree(&cstr2);
-        return;
+        //do nothiing
     }
     else{
-        cstringSprintf(&cstr2, "011"DELIM"%s", cstr);
-        call2(win, push, cstr2);
-        cstringFree(&cstr);
-        cstringFree(&cstr2);
+        if(containsDelim(cstr)){
+            for(size_t i=0; (int)i<containsDelim(cstr); i++){
+                char* token = strtok(cstr, DELIM);
+                cstringSprintf(&cstr2, "011"DELIM"%s", token);
+                call2(win, push, cstr2);
+                call2(win, push, "001");
+            }
+            char* token = strtok(cstr, DELIM);
+            cstringSprintf(&cstr2, "011"DELIM"%s", token);
+            call2(win, push, cstr2);
+        }
+        else{
+            cstringSprintf(&cstr2, "011"DELIM"%s", cstr);
+            call2(win, push, cstr2);
+        }
     }
+    cstringFree(&cstr);
+    cstringFree(&cstr2);
 }
 /* * * * * * * * * */
