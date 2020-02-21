@@ -118,9 +118,8 @@ int main(int argc, char** argv){
             system(screenStuff);
             stuff(cstr, 1, '\n');
             truncate("./bt.tmp", 0);
-            stuff(cstr, 3, 'b', 't', '\n');
+            stuff(cstr, 9, 'b', 't', '\n', 'i', 'n', 'f', 'o', ' ', 'b', '\n');
             //truncate("./infob.tmp", 0);
-            //stuff(cstr, 6, 'i', 'n', 'f', 'o', ' ', 'b', '\n');
         }
         else{
             sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], (char)ch);
