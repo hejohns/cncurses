@@ -21,6 +21,11 @@ if [ "$XTERM" = "gnome-terminal" ]; then
     sleep 1 &&\
     screen -S $winName -p 0 -X split -v
     succeed=$?
+elif [ "$XTERM" = "screen" ]; then
+    xterm -e "screen -S $winName gdb $1" &
+    sleep 1 &&\
+    screen -S $winName -p 0 -X split -v
+    succeed=$?
 else
     $XTERM -e "screen -S $winName gdb $1" &
     sleep 1 &&\
