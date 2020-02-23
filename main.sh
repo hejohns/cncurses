@@ -36,10 +36,10 @@ if [ "$succeed" = "0" ]; then
     screen -S $winName -p 1 -X stuff "./gcon.exe ${winName} ${tmp} \n" &&\
     screen -S $winName -p 0 -X focus right &&\
     screen -S $winName -p 0 -X split &&\
-    screen -S $winName -p 0 -X screen watch -n .5 -t -d "cat bt.tmp | sed 's/\x00//g' | tee bt.tmp" &&\
+    screen -S $winName -p 0 -X screen watch -n .7 -t -d "./win2.sh" &&\
     screen -S $winName -p 0 -X resize 70% &&\
     screen -S $winName -p 0 -X focus down &&\
-    screen -S $winName -p 0 -X screen watch -n .5 -t -d "cat infob.tmp | sed 's/\x00//g' | tee infob.tmp" &&\
+    screen -S $winName -p 0 -X screen watch -n .7 -t -d "./win3.sh" &&\
     screen -S $winName -p 0 -X focus left &&\
     screen -S $winName -p 0 -X focus down
 else

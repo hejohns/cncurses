@@ -11,14 +11,87 @@
 #include <stdarg.h>
 
 #define EXIT_KEY '|'
-void stuff(char* cstr, int num, ...){
-    va_list args;
-    va_start(args, num);
-    for(int i=0; i<num; i++){
-        cstr[strlen(cstr)-2] = va_arg(args, int);
-        system(cstr);
+/* terrible practice but... */
+#define STR(x) #x
+#define STUFF_ARROW_KEY(cstr, arr) \
+    do{\
+        cstringSprintf(cstr, "screen -S %s -p 0 -X stuff '%s'", argv[1], STR(arr));\
+        system(*cstr);\
+        cstringSprintf(cstr, "screen -S %s-%d -p 0 -X stuff '%s'", argv[1], uniq, STR(arr));\
+        system(*cstr);\
+    } while(false)
+
+static size_t cstring_size(char* ptr){
+    size_t* tmp = (size_t*)(ptr-sizeof(size_t));
+    return *tmp;
+}
+
+char* cstringInit(char** ptr, size_t size){
+    *ptr = calloc(sizeof(size_t)+size+1, 1);
+    size_t* tmp = (size_t*)*ptr;
+    *tmp = size;
+    *ptr += sizeof(size_t);
+    return *ptr;
+}
+
+void cstringFree(char** ptr){
+    free(*ptr-sizeof(size_t));
+    *ptr = NULL;
+}
+
+int cstringVsprintf(char** ptr, const char* format, va_list ap){
+/* https://stackoverflow.com/questions/37947200/c-variadic-wrapper
+ */
+    va_list args2;
+    va_copy(args2, ap);
+    int len = vsnprintf(*ptr, cstring_size(*ptr), format, ap);
+    if(len > (int)cstring_size(*ptr)){
+        char* tmp = *ptr-sizeof(size_t);
+        char* tmp2 = realloc(tmp, sizeof(size_t)+len+1);
+        if(tmp == NULL){
+            fprintf(stderr, "could not allocate memory for string. Attmempting to continue\n");
+        }
+        else{
+            tmp = tmp2;
+            *(size_t*)tmp = len;
+            *ptr = tmp2+sizeof(size_t);
+            vsnprintf(*ptr, len+1, format, args2);
+        }
     }
+    va_end(args2);
+    return len;
+}
+
+int cstringSprintf(char** ptr, const char* format, ...){
+/* https://stackoverflow.com/questions/37947200/c-variadic-wrapper
+ */
+    va_list args, args2;
+    va_start(args, format);
+    va_copy(args2, args);
+    int len = vsnprintf(*ptr, cstring_size(*ptr), format, args);
     va_end(args);
+    if(len > (int)cstring_size(*ptr)){
+        char* tmp = *ptr-sizeof(size_t);
+        char* tmp2 = realloc(tmp, sizeof(size_t)+len+1);
+        if(tmp == NULL){
+            fprintf(stderr, "could not allocate memory for string. Attmempting to continue\n");
+        }
+        else{
+            tmp = tmp2;
+            *(size_t*)tmp = len;
+            *ptr = tmp2+sizeof(size_t);
+            vsnprintf(*ptr, len+1, format, args2);
+        }
+    }
+    va_end(args2);
+    return len;
+}
+
+char* cstringStrcat(char** dest, char* src){
+    char* destCpy = strdup(*dest);
+    cstringSprintf(dest, "%s%s", destCpy, src);
+    free(destCpy);
+    return *dest;
 }
 
 int main(int argc, char** argv){
@@ -27,40 +100,12 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
     unsigned int uniq = time(NULL);
-    size_t sz = 80;
-    char* cstr = malloc(sz);
-    int len = snprintf(cstr, sz, "screen -S %s-%d -dm bash -i", argv[1], uniq);
-    if(len > sz){
-        char* tmp = realloc(cstr, len+1);
-        if(tmp == NULL){
-            fprintf(stderr, "realloc failure\n");
-            exit(EXIT_FAILURE);
-        }
-        else{
-            sz = len+1;
-            cstr = tmp;
-            sprintf(cstr, "screen -S %s-%d -dm bash -i", argv[1], uniq);
-        }
-    }
+    char* cstr;
+    cstringInit(&cstr, 80);
+    cstringSprintf(&cstr, "screen -S %s-%d -dm bash -i", argv[1], uniq);
     system(cstr);
-    len = snprintf(cstr, sz, "screen -S %s-%d -p 0 -X stuff \"c\"", argv[1], uniq);
-    if(len > sz){
-        char* tmp = realloc(cstr, len+1);
-        if(tmp == NULL){
-            fprintf(stderr, "realloc failure\n");
-            exit(EXIT_FAILURE);
-        }
-        else{
-            sz = len+1;
-            cstr = tmp;
-            sprintf(cstr, "screen -S %s-%d -p 0 -X stuff \"c\"", argv[1], uniq);
-        }
-    }
-    stuff(cstr, 4, 'g', 'd', 'b', ' ');
-    for(int i=0; i<strlen(argv[2]); i++){
-        stuff(cstr, 1, argv[2][i]);
-    }
-    stuff(cstr, 32, ' ', '2', '>', '&', '1', ' ', '|', 't', 'e', 'e', ' ', '.', '/', 'b', 't', '.', 't', 'm', 'p', '>', '.', '/', 'i', 'n', 'f', 'o', 'b', '.', 't', 'm', 'p','\n');
+    cstringSprintf(&cstr, "screen -S %s-%d -p 0 -X stuff '%s %s 2>&1 | tee ./bt.tmp > ./infob.tmp\n'", argv[1], uniq, "gdb", argv[2]);
+    system(cstr);
     initscr();
     timeout(-1);
     curs_set(0);
@@ -81,59 +126,54 @@ int main(int argc, char** argv){
         endwin();
         exit(EXIT_FAILURE);
     }
-    char* screenStuff = malloc(strlen("screen -S ") + strlen(argv[1]) + strlen(" -p 0 -X stuff \"c\"") + 1);
     int ch = 0;
     while((ch = getch()) != EXIT_KEY){
-        if(ch == KEY_BACKSPACE){
-            sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], '');
-            system(screenStuff);
-            stuff(cstr, 1, '');
+        if(ch == KEY_RESIZE){
+            //ignore
+        }
+        else if(ch == KEY_BACKSPACE){
+            STUFF_ARROW_KEY(&cstr, );
         }
         else if(ch == KEY_LEFT){
-            sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], '');
-            system(screenStuff);
-            stuff(screenStuff, 2, 'O', 'D');
-            stuff(cstr, 3, '', 'O', 'D');
+            STUFF_ARROW_KEY(&cstr, OD);
         }
         else if(ch == KEY_RIGHT){
-            sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], '');
-            system(screenStuff);
-            stuff(screenStuff, 2, 'O', 'C');
-            stuff(cstr, 3, '', 'O', 'C');
+            STUFF_ARROW_KEY(&cstr, OC);
         }
         else if(ch == KEY_UP){
-            sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], '');
-            system(screenStuff);
-            stuff(screenStuff, 2, 'O', 'A');
-            stuff(cstr, 3, '', 'O', 'A');
+            STUFF_ARROW_KEY(&cstr, OA);
         }
         else if(ch == KEY_DOWN){
-            sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], '');
-            system(screenStuff);
-            stuff(screenStuff, 2, 'O', 'B');
-            stuff(cstr, 3, '', 'O', 'B');
+            STUFF_ARROW_KEY(&cstr, OB);
         }
         else if(ch == '\n'){
-            sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], '\n');
-            system(screenStuff);
-            stuff(cstr, 1, '\n');
-            truncate("./bt.tmp", 0);
-            stuff(cstr, 9, 'b', 't', '\n', 'i', 'n', 'f', 'o', ' ', 'b', '\n');
-            //truncate("./infob.tmp", 0);
+            STUFF_ARROW_KEY(&cstr, \n);
+            /*
+            close(btfd);
+            remove("./bt.tmp");
+            if(btfd = open("./bt.tmp", O_CREAT | O_TRUNC | O_WRONLY | O_SYNC, 0644), btfd == -1){
+                fprintf(stderr, "open() failed\n");
+                endwin();
+                exit(EXIT_FAILURE);
+            }
+            */
+            ftruncate(btfd, 0);
+            cstringSprintf(&cstr, "screen -S %s-%d -p 0 -X stuff '%s'", argv[1], uniq, "bt\ninfo b\n");
+            system(cstr);
         }
         else{
-            sprintf(screenStuff, "screen -S %s -p 0 -X stuff \"%c\"", argv[1], (char)ch);
-            system(screenStuff);
-            stuff(cstr, 1, (char)ch);
+            cstringSprintf(&cstr, "screen -S %s -p 0 -X stuff '%c'", argv[1], (char)ch);
+            system(cstr);
+            cstringSprintf(&cstr, "screen -S %s-%d -p 0 -X stuff '%c'", argv[1], uniq, (char)ch);
+            system(cstr);
         }
     }
     endwin();
-    sprintf(cstr, "screen -S %s-%d -X quit", argv[1], uniq);
+    cstringSprintf(&cstr, "screen -S %s-%d -X quit", argv[1], uniq);
     system(cstr);
-    sprintf(screenStuff, "screen -S %s -X quit", argv[1]);
-    system(screenStuff);
-    free(cstr);
-    free(screenStuff);
+    cstringSprintf(&cstr, "screen -S %s -X quit", argv[1]);
+    system(cstr);
+    cstringFree(&cstr);
     close(btfd);
     close(infobfd);
     remove("./bt.tmp");
